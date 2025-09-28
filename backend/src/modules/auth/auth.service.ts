@@ -1,17 +1,21 @@
-import { prisma } from "../../shared/config/database";
+import { db, COLLECTIONS } from "../../shared/config/firebase";
 import { twilioClient, TWILIO_PHONE_NUMBER } from "../../shared/config/twilio";
-import { AuthUser } from "./auth.types";
+import { emailTransporter } from "../../shared/config/email";
+import { AuthUser, Role } from "./auth.types";
+import {
+  UserDocument,
+  AccessCodeDocument,
+  AccessCodeType,
+} from "../../shared/types/firebase.types";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-// Constants
 const CODE_EXPIRY_MINUTES = 10;
 const CODE_EXPIRY_MS = CODE_EXPIRY_MINUTES * 60 * 1000;
-const CODE_LENGTH = 6;
 const MIN_CODE = 100000;
 const MAX_CODE = 999999;
 const DEFAULT_USER_NAME = "New User";
-const DEFAULT_ROLE = "STUDENT";
+const DEFAULT_ROLE = Role.STUDENT;
 const TOKEN_EXPIRY = "24h";
 
 export class AuthService {
@@ -19,14 +23,15 @@ export class AuthService {
     const code = crypto.randomInt(MIN_CODE, MAX_CODE).toString();
     const expiresAt = new Date(Date.now() + CODE_EXPIRY_MS);
 
-    await prisma.accessCode.create({
-      data: {
-        phone: phoneNumber,
-        code,
-        expiresAt,
-        type: "SMS",
-      },
-    });
+    const accessCodeData: Omit<AccessCodeDocument, "id"> = {
+      identifier: phoneNumber,
+      code,
+      expiresAt,
+      type: AccessCodeType.SMS,
+      createdAt: new Date(),
+    };
+
+    await db.collection(COLLECTIONS.ACCESS_CODES).add(accessCodeData);
 
     await twilioClient.messages.create({
       body: `Your classroom access code is: ${code}`,
@@ -39,44 +44,51 @@ export class AuthService {
     phoneNumber: string,
     accessCode: string,
   ): Promise<AuthUser | null> {
-    const codeRecord = await prisma.accessCode.findFirst({
-      where: {
-        phone: phoneNumber,
-        code: accessCode,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-    });
+    const codeQuery = await db
+      .collection(COLLECTIONS.ACCESS_CODES)
+      .where("identifier", "==", phoneNumber)
+      .where("code", "==", accessCode)
+      .where("expiresAt", ">", new Date())
+      .limit(1)
+      .get();
 
-    if (!codeRecord) {
+    if (codeQuery.empty) {
       return null;
     }
 
-    await prisma.accessCode.delete({
-      where: { id: codeRecord.id },
-    });
+    const codeDoc = codeQuery.docs[0];
+    await codeDoc.ref.delete();
 
-    let user = await prisma.user.findUnique({
-      where: { phone: phoneNumber },
-    });
+    const userQuery = await db
+      .collection(COLLECTIONS.USERS)
+      .where("phone", "==", phoneNumber)
+      .limit(1)
+      .get();
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          phone: phoneNumber,
-          name: DEFAULT_USER_NAME,
-          role: DEFAULT_ROLE,
-        },
-      });
+    let userDoc;
+    if (userQuery.empty) {
+      const newUserData: Omit<UserDocument, "id"> = {
+        phone: phoneNumber,
+        name: DEFAULT_USER_NAME,
+        role: DEFAULT_ROLE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const newUserRef = await db
+        .collection(COLLECTIONS.USERS)
+        .add(newUserData);
+      userDoc = await newUserRef.get();
+    } else {
+      userDoc = userQuery.docs[0];
     }
 
+    const userData = userDoc.data() as UserDocument;
     return {
-      id: user.id,
-      phone: user.phone,
-      email: user.email,
-      name: user.name,
-      role: user.role as "INSTRUCTOR" | "STUDENT",
+      id: userDoc.id,
+      phone: userData?.phone,
+      email: userData?.email,
+      name: userData?.name,
+      role: userData?.role as Role,
     };
   }
 
@@ -84,56 +96,71 @@ export class AuthService {
     const code = crypto.randomInt(MIN_CODE, MAX_CODE).toString();
     const expiresAt = new Date(Date.now() + CODE_EXPIRY_MS);
 
-    await prisma.accessCode.create({
-      data: {
-        phone: email,
-        code,
-        expiresAt,
-        type: "EMAIL",
-      },
-    });
+    const emailCodeData: Omit<AccessCodeDocument, "id"> = {
+      identifier: email,
+      code,
+      expiresAt,
+      type: AccessCodeType.EMAIL,
+      createdAt: new Date(),
+    };
+    await db.collection(COLLECTIONS.ACCESS_CODES).add(emailCodeData);
 
-    // TODO: Send email with code
-    console.log(`Email access code for ${email}: ${code}`);
+    if (emailTransporter) {
+      await emailTransporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Classroom Access Code",
+        text: `Your classroom access code is: ${code}\n\nThis code will expire in 10 minutes.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Classroom Access Code</h2>
+            <p>Your access code is: <strong style="font-size: 24px; color: #007bff;">${code}</strong></p>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+          </div>
+        `,
+      });
+    }
   }
 
   async validateEmailCode(
     email: string,
     accessCode: string,
   ): Promise<AuthUser | null> {
-    const codeRecord = await prisma.accessCode.findFirst({
-      where: {
-        phone: email,
-        code: accessCode,
-        expiresAt: {
-          gt: new Date(),
-        },
-        type: "EMAIL",
-      },
-    });
+    const codeQuery = await db
+      .collection(COLLECTIONS.ACCESS_CODES)
+      .where("identifier", "==", email)
+      .where("code", "==", accessCode)
+      .where("expiresAt", ">", new Date())
+      .where("type", "==", AccessCodeType.EMAIL)
+      .limit(1)
+      .get();
 
-    if (!codeRecord) {
+    if (codeQuery.empty) {
       return null;
     }
 
-    await prisma.accessCode.delete({
-      where: { id: codeRecord.id },
-    });
+    const codeDoc = codeQuery.docs[0];
+    await codeDoc.ref.delete();
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const userQuery = await db
+      .collection(COLLECTIONS.USERS)
+      .where("email", "==", email)
+      .limit(1)
+      .get();
 
-    if (!user) {
+    if (userQuery.empty) {
       return null;
     }
 
+    const userDoc = userQuery.docs[0];
+    const userData = userDoc.data() as UserDocument;
     return {
-      id: user.id,
-      phone: user.phone,
-      email: user.email,
-      name: user.name,
-      role: user.role,
+      id: userDoc.id,
+      phone: userData.phone,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
     };
   }
 

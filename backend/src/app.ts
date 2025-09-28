@@ -23,7 +23,7 @@ app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/auth", authRoutes);
+app.use("/", authRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ success: true, message: "Server is running" });

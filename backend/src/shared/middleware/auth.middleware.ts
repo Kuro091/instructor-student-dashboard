@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { AuthUser } from "../../modules/auth/auth.types";
-import { Role } from "../../generated/prisma";
+import { AuthUser, Role } from "../../modules/auth/auth.types";
 
 declare global {
   namespace Express {

@@ -7,6 +7,5 @@ const authController = new AuthController();
 router.post("/createAccessCode", authController.createAccessCode);
 router.post("/validateAccessCode", authController.validateAccessCode);
 router.post("/loginEmail", authController.loginEmail);
-router.post("/validateEmailCode", authController.validateEmailCode);
 
 export default router;

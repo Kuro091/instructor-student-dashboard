@@ -7,10 +7,15 @@ const createAccessCodeSchema = z.object({
   phoneNumber: z.string().min(10).max(15),
 });
 
-const validateAccessCodeSchema = z.object({
-  phoneNumber: z.string().min(10).max(15),
-  accessCode: z.string().length(6),
-});
+const validateAccessCodeSchema = z
+  .object({
+    phoneNumber: z.string().min(10).max(15).optional(),
+    email: z.string().email().optional(),
+    accessCode: z.string().length(6),
+  })
+  .refine((data) => data.phoneNumber || data.email, {
+    message: "Either phoneNumber or email must be provided",
+  });
 
 const loginEmailSchema = z.object({
   email: z.string().email(),
@@ -50,14 +55,22 @@ export class AuthController {
 
   async validateAccessCode(req: Request, res: Response): Promise<void> {
     try {
-      const { phoneNumber, accessCode } = validateAccessCodeSchema.parse(
+      const { phoneNumber, email, accessCode } = validateAccessCodeSchema.parse(
         req.body,
       );
 
-      const user = await this.authService.validateAccessCode(
-        phoneNumber,
-        accessCode,
-      );
+      let user: any = null;
+
+      if (phoneNumber) {
+        // SMS validation
+        user = await this.authService.validateAccessCode(
+          phoneNumber,
+          accessCode,
+        );
+      } else if (email) {
+        // Email validation
+        user = await this.authService.validateEmailCode(email, accessCode);
+      }
 
       if (!user) {
         const response: ApiResponse = {
