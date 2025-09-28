@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  email     String?  @unique
+  name      String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  instructorLessons Lesson[]  @relation("InstructorLessons")
+  studentLessons    Lesson[]  @relation("StudentLessons")
+  sentMessages      Message[] @relation("SentMessages")
+  receivedMessages  Message[] @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+model Lesson {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  status      LessonStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  instructorId String
+  instructor   User    @relation("InstructorLessons", fields: [instructorId], references: [id])
+  studentId    String?
+  student      User?   @relation("StudentLessons", fields: [studentId], references: [id])
+
+  @@map("lessons")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  senderId   String
+  sender     User   @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User   @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@map("messages")
+}
+
+model AccessCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  type      CodeType @default(SMS)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("access_codes")
+}
+
+enum Role {
+  INSTRUCTOR
+  STUDENT
+}
+
+enum LessonStatus {
+  PENDING
+  COMPLETED
+}
+
+enum CodeType {
+  SMS
+  EMAIL
+}

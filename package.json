@@ -1,0 +1,41 @@
+{
+  "name": "classroom-management-app",
+  "version": "1.0.0",
+  "description": "A real-time classroom management tool for instructors and students",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev:frontend": "cd frontend && pnpm run dev",
+    "dev:backend": "cd backend && pnpm run dev",
+    "build": "pnpm run build:frontend && pnpm run build:backend",
+    "build:frontend": "cd frontend && pnpm run build",
+    "build:backend": "cd backend && pnpm run build",
+    "install:all": "pnpm install && cd frontend && pnpm install && cd ../backend && pnpm install",
+    "test": "pnpm run test:frontend && pnpm run test:backend",
+    "test:frontend": "cd frontend && pnpm test",
+    "test:backend": "cd backend && pnpm test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "classroom",
+    "management",
+    "education",
+    "react",
+    "express",
+    "firebase",
+    "socket.io"
+  ],
+  "author": "Minh (Kuro091)",
+  "license": "MIT"
+}
