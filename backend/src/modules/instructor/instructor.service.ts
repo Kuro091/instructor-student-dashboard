@@ -111,7 +111,10 @@ export class InstructorService {
       description: lessonDocData.description,
       assignedTo: lessonDocData.assignedTo,
       assignedBy: lessonDocData.assignedBy,
-      createdAt: lessonDocData.createdAt,
+      createdAt:
+        lessonDocData.createdAt instanceof Date
+          ? lessonDocData.createdAt.toISOString()
+          : (lessonDocData.createdAt as Timestamp).toDate().toISOString(),
       status: lessonDocData.status,
     };
   }
@@ -172,7 +175,10 @@ export class InstructorService {
         description: data.description,
         assignedTo: data.assignedTo,
         assignedBy: data.assignedBy,
-        createdAt: data.createdAt,
+        createdAt:
+          data.createdAt instanceof Date
+            ? data.createdAt.toISOString()
+            : (data.createdAt as Timestamp).toDate().toISOString(),
         status: data.status,
       };
     });
@@ -271,6 +277,26 @@ export class InstructorService {
     await batch.commit();
   }
 
+  async getAllLessons(): Promise<Lesson[]> {
+    const lessonsQuery = await db.collection(COLLECTIONS.LESSONS).get();
+
+    return lessonsQuery.docs.map((doc) => {
+      const data = doc.data() as LessonDocument;
+      return {
+        id: doc.id,
+        title: data.title,
+        description: data.description,
+        assignedTo: data.assignedTo,
+        assignedBy: data.assignedBy,
+        createdAt:
+          data.createdAt instanceof Date
+            ? data.createdAt.toISOString()
+            : (data.createdAt as Timestamp).toDate().toISOString(),
+        status: data.status,
+      };
+    });
+  }
+
   private async sendStudentOnboardingEmail(
     email: string,
     name: string,
@@ -288,7 +314,7 @@ export class InstructorService {
       { expiresIn: "24h" },
     );
 
-    const setupLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/student-setup?token=${setupToken}`;
+    const setupLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/student-setup?token=${encodeURIComponent(setupToken)}`;
 
     try {
       await emailTransporter.sendMail({

@@ -91,4 +91,9 @@ export class InstructorController {
     await this.instructorService.deleteStudent(phone);
     sendSuccessResponse(res, undefined, "Student deleted successfully");
   });
+
+  getAllLessons = createController(async (req: Request, res: Response) => {
+    const lessons = await this.instructorService.getAllLessons();
+    sendSuccessResponse(res, lessons, "Lessons retrieved successfully");
+  });
 }

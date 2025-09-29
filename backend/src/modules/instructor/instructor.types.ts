@@ -34,6 +34,6 @@ export interface Lesson {
   description: string;
   assignedTo: string[]; // student phones
   assignedBy: string; // instructor phone
-  createdAt: Date;
+  createdAt: string;
   status: "pending" | "completed";
 }

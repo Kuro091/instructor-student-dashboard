@@ -8,15 +8,14 @@ import { VerificationPage } from '@/features/auth/components/verification-page'
 import { StudentSetupPage } from '@/features/auth/components/student-setup-page'
 import { InstructorDashboard } from '@/features/instructor/components/instructor-dashboard'
 import { InstructorLayout } from '@/features/instructor/components/instructor-layout'
+import { StudentManagement } from '@/features/instructor/components/student-management'
+import { StudentProfile } from '@/features/instructor/components/student-profile'
+import { LessonAssignment } from '@/features/instructor/components/lesson-assignment'
 
 
 const StudentSetupPageComponent = () => <StudentSetupPage />
-const InstructorStudents = () => <div>Instructor Students</div>
-const InstructorStudentProfile = () => <div>Instructor Student Profile</div>
-const InstructorLessons = () => <div>Instructor Lessons</div>
 const StudentDashboard = () => <div>Student Dashboard</div>
 const StudentLesson = () => <div>Student Lesson</div>
-const StudentProfile = () => <div>Student Profile</div>
 const ChatList = () => <div>Chat List</div>
 const ChatConversation = () => <div>Chat Conversation</div>
 const NotFoundPage = () => <div>404 Not Found</div>
@@ -68,15 +67,15 @@ const router = createBrowserRouter([
       },
       {
         path: 'students',
-        element: <InstructorStudents />,
+        element: <StudentManagement />,
       },
       {
         path: 'student/:phone',
-        element: <InstructorStudentProfile />,
+        element: <StudentProfile />,
       },
       {
         path: 'lessons',
-        element: <InstructorLessons />,
+        element: <LessonAssignment />,
       },
     ],
   },

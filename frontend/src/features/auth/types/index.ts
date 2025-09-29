@@ -36,7 +36,7 @@ export interface CreateAccessCodeRequest {
 }
 
 export interface StudentSetupRequest {
-  token: string
+  setupToken: string
   username: string
   password: string
 }

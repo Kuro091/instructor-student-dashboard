@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '../stores/auth-context'
 import { useValidateToken, useStudentSetup } from '../hooks/use-auth-queries'
@@ -21,8 +20,6 @@ const studentSetupSchema = z.object({
   password: z.string()
     .min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  acceptTerms: z.boolean()
-    .refine(val => val === true, 'You must accept the terms and conditions')
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -34,7 +31,14 @@ export function StudentSetupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
-  const { token } = useParams<{ token: string }>()
+  const [searchParams] = useSearchParams()
+  const rawToken = searchParams.get('token') || undefined
+  
+  let token = rawToken
+  if (rawToken?.includes('http')) {
+    const tokenMatch = rawToken.match(/token=([^&]+)/)
+    token = tokenMatch ? tokenMatch[1] : rawToken
+  }
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -51,14 +55,13 @@ export function StudentSetupPage() {
     defaultValues: {
       username: '',
       password: '',
-      confirmPassword: '',
-      acceptTerms: false
+      confirmPassword: ''
     }
   })
 
   const onSubmit = (data: StudentSetupFormData) => {
     setupMutation.mutate({
-      token: token!,
+      setupToken: token!,
       username: data.username,
       password: data.password
     }, {
@@ -235,26 +238,6 @@ export function StudentSetupPage() {
               )}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="acceptTerms"
-                checked={form.watch('acceptTerms')}
-                onCheckedChange={(checked) => form.setValue('acceptTerms', checked as boolean)}
-              />
-              <Label htmlFor="acceptTerms" className="text-sm">
-                I accept the{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Terms and Conditions
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-primary hover:underline">
-                  Privacy Policy
-                </a>
-              </Label>
-            </div>
-            {form.formState.errors.acceptTerms && (
-              <p className="text-red-500 text-sm">{form.formState.errors.acceptTerms.message}</p>
-            )}
 
             {setupMutation.error && (
               <Alert variant="destructive">

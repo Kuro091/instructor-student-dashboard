@@ -36,4 +36,8 @@ router.delete("/student/:phone", (req, res, next) =>
   instructorController.deleteStudent(req, res, next),
 );
 
+router.get("/lessons", (req, res, next) =>
+  instructorController.getAllLessons(req, res, next),
+);
+
 export default router;

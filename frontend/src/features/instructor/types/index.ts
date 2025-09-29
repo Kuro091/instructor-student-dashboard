@@ -9,11 +9,15 @@ export interface Student {
   updatedAt: string
 }
 
+export interface StudentWithLessons extends Student {
+  lessons: Lesson[]
+}
+
 export interface Lesson {
-  lessonId: string
+  id: string
   title: string
   description: string
-  studentPhone: string
+  assignedTo: string[] // student phones
   assignedBy: string // instructor phone
   createdAt: string
   status: 'pending' | 'completed'
@@ -21,9 +25,9 @@ export interface Lesson {
 
 export interface InstructorStats {
   totalStudents: number
-  activeLessons: number
-  completedLessons: number
-  pendingLessons: number
+  activeStudents: number
+  pendingSetup: number
+  recentAdditions: number
 }
 
 export interface AddStudentRequest {
@@ -33,18 +37,26 @@ export interface AddStudentRequest {
 }
 
 export interface AssignLessonRequest {
+  studentPhones: string[]
   title: string
   description: string
-  studentPhone: string
 }
 
-export interface ApiResponse<T> {
+export interface EditStudentRequest {
+  name?: string
+  email?: string
+}
+
+export interface ApiResponse<T = unknown> {
   success: boolean
-  data: T
-  message: string
+  data?: T
+  error?: string
+  message?: string
 }
 
-export interface ApiError {
-  success: false
-  error: string
+export interface ApiErrorResponse {
+  response?: {
+    data?: ApiResponse
+  }
+  message?: string
 }

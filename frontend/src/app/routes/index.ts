@@ -3,7 +3,7 @@ export const routes = {
   
   login: '/login',
   verify: '/verify',
-  studentSetup: '/student-setup/:token',
+  studentSetup: '/student-setup',
   
   instructor: {
     dashboard: '/instructor',
