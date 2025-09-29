@@ -8,13 +8,17 @@ interface MessageBubbleProps {
   isOwn: boolean
   showAvatar?: boolean
   showTimestamp?: boolean
+  isMarkingAsRead?: boolean
+  isLastReadMessage?: boolean
 }
 
 export function MessageBubble({ 
   message, 
   isOwn, 
   showAvatar = false, 
-  showTimestamp = true 
+  showTimestamp = true,
+  isMarkingAsRead = false,
+  isLastReadMessage = false
 }: MessageBubbleProps) {
   const formatTime = (timestamp: string | FirestoreTimestamp) => {
     const date = timestampToDate(timestamp)
@@ -53,21 +57,29 @@ export function MessageBubble({
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
         
-        {showTimestamp && (
+        {isOwn && (
           <div className={cn(
             "flex items-center gap-1 text-gray-500 text-xs",
-            isOwn ? "flex-row-reverse" : "flex-row"
+            "flex-row-reverse"
           )}>
-            <span>{formatTime(message.timestamp)}</span>
-            {isOwn && (
+            {showTimestamp && <span>{formatTime(message.timestamp)}</span>}
+            {isLastReadMessage && (
               <div className="flex items-center">
                 {message.isRead ? (
                   <CheckCheck className="w-3 h-3 text-blue-500" />
+                ) : isMarkingAsRead ? (
+                  <div className="border border-gray-400 border-t-transparent rounded-full w-3 h-3 animate-spin" />
                 ) : (
-                  <Check className="w-3 h-3" />
+                  <Check className="w-3 h-3 text-gray-400" />
                 )}
               </div>
             )}
+          </div>
+        )}
+        
+        {!isOwn && showTimestamp && (
+          <div className="flex items-center gap-1 text-gray-500 text-xs">
+            <span>{formatTime(message.timestamp)}</span>
           </div>
         )}
       </div>

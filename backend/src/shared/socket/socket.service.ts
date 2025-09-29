@@ -10,6 +10,7 @@ import {
 } from "../../modules/chat/chat.types";
 import { AuthenticatedSocket } from "./socket.manager";
 import { AuthUser } from "../../modules/auth/auth.types";
+import { db } from "../config/firebase";
 
 export const SOCKET_EVENTS = {
   SEND_MESSAGE: "send_message",
@@ -49,6 +50,7 @@ interface UserStatusEvent {
 
 interface MessageReadEvent {
   messageId: string;
+  readAt: string;
 }
 
 interface ConnectedEvent {
@@ -210,13 +212,46 @@ export class SocketService {
               return;
             }
 
+            // Get the message to find the sender
+            const messageDoc = await db
+              .collection("messages")
+              .doc(data.messageId)
+              .get();
+
+            if (!messageDoc.exists) {
+              authSocket.emit(SOCKET_EVENTS.ERROR, {
+                message: "Message not found",
+              } as ErrorEvent);
+              return;
+            }
+
+            const messageData = messageDoc.data()!;
+            const senderId = messageData.senderId;
+
             await this.chatService.markMessageAsRead(
               data.messageId,
               authSocket.user.id,
             );
 
+            // Emit to the current user (receiver)
             authSocket.emit(SOCKET_EVENTS.MESSAGE_READ, {
               messageId: data.messageId,
+              readAt: new Date().toISOString(),
+            } as MessageReadEvent);
+
+            // Emit to the sender that their message has been read
+            const senderSocketId = this.socketManager.getUserSocketId(senderId);
+            if (senderSocketId) {
+              this.io.to(senderSocketId).emit(SOCKET_EVENTS.MESSAGE_READ, {
+                messageId: data.messageId,
+                readAt: new Date().toISOString(),
+              } as MessageReadEvent);
+            }
+
+            // Also emit to the sender's user room
+            this.io.to(`user_${senderId}`).emit(SOCKET_EVENTS.MESSAGE_READ, {
+              messageId: data.messageId,
+              readAt: new Date().toISOString(),
             } as MessageReadEvent);
           } catch (error) {
             console.error("Error marking message as read:", error);

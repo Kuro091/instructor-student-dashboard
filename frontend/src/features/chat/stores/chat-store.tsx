@@ -56,6 +56,11 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           msg.id === action.payload.messageId
             ? { ...msg, ...action.payload.updates }
             : msg
+        ),
+        conversations: state.conversations.map(conv => 
+          conv.lastMessage?.id === action.payload.messageId
+            ? { ...conv, lastMessage: { ...conv.lastMessage, ...action.payload.updates } }
+            : conv
         )
       }
     

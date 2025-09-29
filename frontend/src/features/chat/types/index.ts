@@ -50,7 +50,7 @@ export interface SocketEvents {
   // Incoming events
   new_message: Message
   message_sent: Message
-  message_read: { messageId: string }
+  message_read: { messageId: string; readAt: string }
   user_typing: { userId: string; isTyping: boolean }
   user_status: { userId: string; isOnline: boolean }
   connected: { message: string; userId: string }

@@ -40,10 +40,12 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async (data: SendMessageRequest) => {
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
       sendMessage(data.receiverId, data.content)
       
       return {
-        id: `temp-${Date.now()}`,
+        id: tempId,
         senderId: user?.id || '',
         senderName: user?.name || '',
         senderRole: user?.role || '',
@@ -65,6 +67,7 @@ export function useSendMessage() {
 }
 
 export function useMarkMessageAsRead() {
+  const queryClient = useQueryClient()
   const { markMessageAsRead } = useChat()
 
   return useMutation({
@@ -74,6 +77,12 @@ export function useMarkMessageAsRead() {
     },
     onSuccess: (_, messageId) => {
       markMessageAsRead(messageId)
+      
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
+      queryClient.invalidateQueries({ queryKey: chatKeys.all })
+    },
+    onError: (error) => {
+      console.error('Failed to mark message as read:', error)
     },
   })
 }

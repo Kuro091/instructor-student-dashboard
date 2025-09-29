@@ -108,26 +108,46 @@ export class ChatService {
         .filter(
           (conv, index, self) =>
             index === self.findIndex((c) => c.id === conv.id),
-        )
-        .sort((a, b) => {
-          const getTime = (
-            timestamp:
-              | Date
-              | { _seconds: number; _nanoseconds: number }
-              | undefined,
-          ) => {
-            if (!timestamp) return 0;
-            if (timestamp instanceof Date) return timestamp.getTime();
-            if ("_seconds" in timestamp) return timestamp._seconds * 1000;
-            return 0;
-          };
+        );
 
-          const aTime = getTime(a.lastMessageAt);
-          const bTime = getTime(b.lastMessageAt);
-          return bTime - aTime;
-        });
+      // Sync the lastMessage read status for each conversation
+      for (const conversation of uniqueConversations) {
+        if (conversation.lastMessage) {
+          await this.syncConversationLastMessage(
+            conversation.id,
+            conversation.lastMessage.id,
+          );
+        }
+      }
 
-      return uniqueConversations;
+      // Re-fetch conversations after sync to get updated data
+      const syncedConversations = await Promise.all(
+        uniqueConversations.map(async (conv) => {
+          const doc = await db
+            .collection(this.conversationsCollection)
+            .doc(conv.id)
+            .get();
+          return { id: doc.id, ...doc.data() } as Conversation;
+        }),
+      );
+
+      return syncedConversations.sort((a, b) => {
+        const getTime = (
+          timestamp:
+            | Date
+            | { _seconds: number; _nanoseconds: number }
+            | undefined,
+        ) => {
+          if (!timestamp) return 0;
+          if (timestamp instanceof Date) return timestamp.getTime();
+          if ("_seconds" in timestamp) return timestamp._seconds * 1000;
+          return 0;
+        };
+
+        const aTime = getTime(a.lastMessageAt);
+        const bTime = getTime(b.lastMessageAt);
+        return bTime - aTime;
+      });
     } catch (error) {
       console.error("Error getting user conversations:", error);
       throw new Error("Failed to get conversations");
@@ -152,6 +172,12 @@ export class ChatService {
       await db.collection(this.messagesCollection).doc(messageId).update({
         isRead: true,
       });
+
+      await this.updateConversationLastMessage(
+        messageId,
+        messageData.senderId,
+        messageData.receiverId,
+      );
     } catch (error) {
       console.error("Error marking message as read:", error);
       throw new Error("Failed to mark message as read");
@@ -221,6 +247,81 @@ export class ChatService {
         lastMessageAt: message.timestamp,
         updatedAt: new Date(),
       });
+    }
+  }
+
+  private async updateConversationLastMessage(
+    messageId: string,
+    senderId: string,
+    receiverId: string,
+  ): Promise<void> {
+    try {
+      const conversationQuery = await db
+        .collection(this.conversationsCollection)
+        .where("participants.instructorId", "in", [senderId, receiverId])
+        .where("participants.studentId", "in", [senderId, receiverId])
+        .limit(1)
+        .get();
+
+      if (!conversationQuery.empty) {
+        const conversationDoc = conversationQuery.docs[0];
+        const conversationData = conversationDoc.data();
+
+        // Always update the conversation's lastMessage to reflect current read status
+        if (conversationData.lastMessage) {
+          const lastMessageDoc = await db
+            .collection(this.messagesCollection)
+            .doc(conversationData.lastMessage.id)
+            .get();
+
+          if (lastMessageDoc.exists) {
+            const currentLastMessage = lastMessageDoc.data()!;
+
+            await conversationDoc.ref.update({
+              lastMessage: currentLastMessage,
+              updatedAt: new Date(),
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error updating conversation last message:", error);
+      // Don't throw here
+    }
+  }
+
+  private async syncConversationLastMessage(
+    conversationId: string,
+    lastMessageId: string,
+  ): Promise<void> {
+    try {
+      const conversationDoc = await db
+        .collection(this.conversationsCollection)
+        .doc(conversationId)
+        .get();
+
+      if (!conversationDoc.exists) {
+        return;
+      }
+
+      const conversationData = conversationDoc.data()!;
+
+      const lastMessageDoc = await db
+        .collection(this.messagesCollection)
+        .doc(lastMessageId)
+        .get();
+
+      if (lastMessageDoc.exists) {
+        const currentLastMessage = lastMessageDoc.data()!;
+
+        await conversationDoc.ref.update({
+          lastMessage: currentLastMessage,
+          updatedAt: new Date(),
+        });
+      }
+    } catch (error) {
+      console.error("Error syncing conversation last message:", error);
+      // Don't throw here as it's not critical
     }
   }
 }

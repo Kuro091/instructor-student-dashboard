@@ -18,6 +18,7 @@ export function ChatWindow() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const markedAsReadRef = useRef<Set<string>>(new Set())
+  const markAsReadTimeoutRef = useRef<number | null>(null)
   
   const { data: conversationData, isLoading } = useConversation(urlParticipantId!)
   const sendMessageMutation = useSendMessage()
@@ -58,18 +59,57 @@ export function ChatWindow() {
       const unreadMessages = messages.filter(msg => 
         !msg.isRead && 
         msg.senderId !== user?.id && 
-        !markedAsReadRef.current.has(msg.id)
+        !markedAsReadRef.current.has(msg.id) &&
+        msg.id && // Ensure message has a valid ID
+        !msg.id.startsWith('temp-') // Don't mark temporary messages as read
       )
       
-      unreadMessages.forEach(msg => {
-        markedAsReadRef.current.add(msg.id)
-        markAsReadMutation.mutate(msg.id)
-      })
+      if (unreadMessages.length > 0) {
+        // Clear existing timeout
+        if (markAsReadTimeoutRef.current) {
+          clearTimeout(markAsReadTimeoutRef.current)
+        }
+        
+        // Debounce the mark-as-read calls
+        markAsReadTimeoutRef.current = setTimeout(() => {
+          unreadMessages.forEach(msg => {
+            markedAsReadRef.current.add(msg.id)
+            markAsReadMutation.mutate(msg.id)
+          })
+        }, 1000) // 1 second debounce
+      }
     }
   }, [conversation, messages, markAsReadMutation, user?.id])
 
   useEffect(() => {
     markMessagesAsRead()
+  }, [markMessagesAsRead])
+
+  useEffect(() => {
+    return () => {
+      if (markAsReadTimeoutRef.current) {
+        clearTimeout(markAsReadTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Mark messages as read when user scrolls to bottom (indicating they've seen the messages)
+  useEffect(() => {
+    const handleScroll = () => {
+      if (messagesEndRef.current) {
+        const rect = messagesEndRef.current.getBoundingClientRect()
+        const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight
+        if (isVisible) {
+          markMessagesAsRead()
+        }
+      }
+    }
+
+    const scrollContainer = messagesEndRef.current?.parentElement
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll)
+      return () => scrollContainer.removeEventListener('scroll', handleScroll)
+    }
   }, [markMessagesAsRead])
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -111,7 +151,6 @@ export function ChatWindow() {
     setShowEmojiPicker(false)
   }
 
-  // Close emoji picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showEmojiPicker && !(event.target as Element).closest('.emoji-picker-container')) {
@@ -210,6 +249,15 @@ export function ChatWindow() {
                   const showAvatar = !prevMessage || prevMessage.senderId !== msg.senderId
                   const showTimestamp = !prevMessage || 
                     new Date(msg.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() > 300000 // 5 minutes
+                  
+                  const isMarkingAsRead = isOwn && !msg.isRead && markedAsReadRef.current.has(msg.id)
+
+                  const lastReadMessageIndex = messages
+                    .map((m, i) => ({ message: m, index: i }))
+                    .reverse()
+                    .find(({ message }) => message.senderId === user?.id && message.isRead)?.index
+
+                  const isLastReadMessage = isOwn && msg.isRead && index === lastReadMessageIndex
 
                   return (
                     <MessageBubble
@@ -218,6 +266,8 @@ export function ChatWindow() {
                       isOwn={isOwn}
                       showAvatar={showAvatar}
                       showTimestamp={showTimestamp}
+                      isMarkingAsRead={isMarkingAsRead}
+                      isLastReadMessage={isLastReadMessage}
                     />
                   )
                 })}
