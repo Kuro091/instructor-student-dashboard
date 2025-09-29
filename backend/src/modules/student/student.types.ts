@@ -1,12 +1,11 @@
 import { Role } from "../auth/auth.types";
 
 export interface MarkLessonDoneRequest {
-  phone: string;
   lessonId: string;
 }
 
 export interface EditProfileRequest {
-  phone: string;
+  phone?: string;
   name?: string;
   email?: string;
 }

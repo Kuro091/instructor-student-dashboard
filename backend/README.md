@@ -80,16 +80,17 @@ Server will start on `http://localhost:5000`
 **2. Username + Password Authentication (Students)**
 
 - Students are added by instructors via `/api/instructor/addStudent`
-- Email sent to student with account setup link
-- Student creates username/password via `/api/student-auth/setup`
+- Secure JWT token generated and sent via email with setup link
+- Student clicks secure link → Token validated via `/api/student-auth/validate-token/:token`
+- Student creates username/password via `/api/student-auth/setup` (requires valid token)
 - Student logs in with username/password via `/api/student-auth/login`
 
 ### Student Registration Process
 
 1. Instructor adds student → Student created with `isActive: false`
-2. Email sent to student with setup link
-3. Student clicks link → Account setup page
-4. Student creates username/password → Account activated
+2. Secure JWT token generated and sent via email with setup link
+3. Student clicks secure link → Frontend validates token
+4. Student creates username/password → Account activated (`isActive: true`)
 5. Student can now log in with credentials
 
 ## API Endpoints
@@ -98,12 +99,14 @@ Server will start on `http://localhost:5000`
 
 - `POST /api/auth/createAccessCode` - Send SMS verification code
 - `POST /api/auth/validateAccessCode` - Verify SMS code and login (phone + SMS)
+- `POST /api/auth/loginEmail` - Send email verification code
 
 ### Student Authentication (Username + Password)
 
-- `POST /api/student-auth/setup` - Student account setup (email + username + password)
+- `POST /api/student-auth/setup` - Student account setup (secure token + username + password)
 - `POST /api/student-auth/login` - Student login (username + password)
 - `GET /api/student-auth/by-email/:email` - Get student by email
+- `GET /api/student-auth/validate-token/:token` - Validate setup token
 
 ### Instructor Routes
 
@@ -116,9 +119,9 @@ Server will start on `http://localhost:5000`
 
 ### Student Routes
 
-- `GET /api/student/myLessons?phone=xxx` - Get assigned lessons
-- `POST /api/student/markLessonDone` - Mark lesson as completed
-- `PUT /api/student/editProfile` - Update student profile
+- `GET /api/student/myLessons` - Get assigned lessons (JWT-based)
+- `POST /api/student/markLessonDone` - Mark lesson as completed (JWT-based)
+- `PUT /api/student/editProfile` - Update student profile (JWT-based)
 
 ### Health Check
 

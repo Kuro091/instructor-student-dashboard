@@ -35,10 +35,13 @@ export class StudentService {
     });
   }
 
-  async markLessonDone(data: MarkLessonDoneRequest): Promise<StudentLesson> {
+  async markLessonDone(
+    phone: string,
+    data: MarkLessonDoneRequest,
+  ): Promise<StudentLesson> {
     const lessonQuery = await db
       .collection(COLLECTIONS.LESSONS)
-      .where("assignedTo", "array-contains", data.phone)
+      .where("assignedTo", "array-contains", phone)
       .get();
 
     const lessonDoc = lessonQuery.docs.find((doc) => doc.id === data.lessonId);
@@ -68,10 +71,13 @@ export class StudentService {
     };
   }
 
-  async editProfile(data: EditProfileRequest): Promise<StudentProfile> {
+  async editProfile(
+    phone: string,
+    data: EditProfileRequest,
+  ): Promise<StudentProfile> {
     const studentQuery = await db
       .collection(COLLECTIONS.USERS)
-      .where("phone", "==", data.phone)
+      .where("phone", "==", phone)
       .limit(1)
       .get();
 

@@ -8,7 +8,7 @@ import {
 } from "../../shared/utils/error.utils";
 
 const studentSetupSchema = z.object({
-  email: z.email(),
+  setupToken: z.string().min(1),
   username: z.string().min(3),
   password: z.string().min(6),
 });
@@ -33,8 +33,8 @@ export class StudentAuthController {
   loginStudent = createController(async (req: Request, res: Response) => {
     const data = studentLoginSchema.parse(req.body);
 
-    const student = await this.studentAuthService.loginStudent(data);
-    sendSuccessResponse(res, student, "Student logged in successfully");
+    const authResponse = await this.studentAuthService.loginStudent(data);
+    sendSuccessResponse(res, authResponse, "Student logged in successfully");
   });
 
   getStudentByEmail = createController(async (req: Request, res: Response) => {
@@ -51,5 +51,16 @@ export class StudentAuthController {
     } else {
       sendSuccessResponse(res, student, "Student retrieved successfully");
     }
+  });
+
+  validateSetupToken = createController(async (req: Request, res: Response) => {
+    const { token } = req.params;
+
+    if (!token) {
+      throw new ValidationError("Setup token is required");
+    }
+
+    const validation = await this.studentAuthService.validateSetupToken(token);
+    sendSuccessResponse(res, validation, "Token validation completed");
   });
 }

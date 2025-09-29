@@ -25,7 +25,7 @@ const assignLessonSchema = z.object({
 
 const editStudentSchema = z.object({
   name: z.string().min(1).optional(),
-  email: z.string().email("Invalid email address").optional(),
+  email: z.email("Invalid email address").optional(),
 });
 
 export class InstructorController {

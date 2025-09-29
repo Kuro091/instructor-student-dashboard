@@ -16,4 +16,8 @@ router.get("/by-email/:email", (req, res, next) =>
   studentAuthController.getStudentByEmail(req, res, next),
 );
 
+router.get("/validate-token/:token", (req, res, next) =>
+  studentAuthController.validateSetupToken(req, res, next),
+);
+
 export default router;

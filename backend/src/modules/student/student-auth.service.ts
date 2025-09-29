@@ -1,7 +1,26 @@
 import { db, COLLECTIONS } from "../../shared/config/firebase";
 import { UserDocument, Role } from "../../shared/types/firebase.types";
-import { NotFoundError, ValidationError } from "../../shared/utils/error.utils";
+import {
+  NotFoundError,
+  ValidationError,
+  UnauthorizedError,
+} from "../../shared/utils/error.utils";
 import { hashPassword, comparePassword } from "../../shared/utils/auth.utils";
+import jwt from "jsonwebtoken";
+
+export enum TokenPurpose {
+  STUDENT_SETUP = "student_setup",
+  // PASSWORD_RESET = "password_reset",
+  // EMAIL_VERIFICATION = "email_verification",
+  // ACCOUNT_RECOVERY = "account_recovery"
+}
+
+interface SetupTokenPayload {
+  email: string;
+  purpose: TokenPurpose;
+  iat: number;
+  exp: number;
+}
 
 export interface StudentProfile {
   id: string;
@@ -15,15 +34,39 @@ export interface StudentProfile {
   updatedAt: Date;
 }
 
+export interface StudentAuthResponse {
+  user: StudentProfile;
+  token: string;
+}
+
 export class StudentAuthService {
   async setupStudentAccount(data: {
-    email: string;
+    setupToken: string;
     username: string;
     password: string;
   }): Promise<StudentProfile> {
+    let tokenPayload: SetupTokenPayload;
+    try {
+      tokenPayload = jwt.verify(
+        data.setupToken,
+        process.env.JWT_SECRET!,
+      ) as SetupTokenPayload;
+    } catch (error) {
+      throw new UnauthorizedError("Invalid or expired setup token");
+    }
+
+    if (tokenPayload.purpose !== TokenPurpose.STUDENT_SETUP) {
+      throw new UnauthorizedError("Invalid token purpose");
+    }
+
+    const email = tokenPayload.email;
+    if (!email) {
+      throw new UnauthorizedError("Email not found in token");
+    }
+
     const studentQuery = await db
       .collection(COLLECTIONS.USERS)
-      .where("email", "==", data.email)
+      .where("email", "==", email)
       .where("role", "==", Role.STUDENT)
       .limit(1)
       .get();
@@ -76,7 +119,7 @@ export class StudentAuthService {
   async loginStudent(data: {
     username: string;
     password: string;
-  }): Promise<StudentProfile> {
+  }): Promise<StudentAuthResponse> {
     const studentQuery = await db
       .collection(COLLECTIONS.USERS)
       .where("username", "==", data.username)
@@ -108,7 +151,7 @@ export class StudentAuthService {
       throw new NotFoundError("Invalid username or password");
     }
 
-    return {
+    const studentProfile: StudentProfile = {
       id: studentDoc.id,
       name: studentData.name,
       phone: studentData.phone,
@@ -118,6 +161,13 @@ export class StudentAuthService {
       isActive: studentData.isActive,
       createdAt: studentData.createdAt,
       updatedAt: studentData.updatedAt,
+    };
+
+    const token = this.generateToken(studentProfile);
+
+    return {
+      user: studentProfile,
+      token,
     };
   }
 
@@ -147,5 +197,49 @@ export class StudentAuthService {
       createdAt: studentData.createdAt,
       updatedAt: studentData.updatedAt,
     };
+  }
+
+  async validateSetupToken(
+    setupToken: string,
+  ): Promise<{ email: string; isValid: boolean }> {
+    try {
+      const tokenPayload = jwt.verify(
+        setupToken,
+        process.env.JWT_SECRET!,
+      ) as SetupTokenPayload;
+
+      if (tokenPayload.purpose !== TokenPurpose.STUDENT_SETUP) {
+        return { email: "", isValid: false };
+      }
+
+      const email = tokenPayload.email;
+      if (!email) {
+        return { email: "", isValid: false };
+      }
+
+      const studentQuery = await db
+        .collection(COLLECTIONS.USERS)
+        .where("email", "==", email)
+        .where("role", "==", Role.STUDENT)
+        .limit(1)
+        .get();
+
+      if (studentQuery.empty) {
+        return { email: "", isValid: false };
+      }
+
+      const studentData = studentQuery.docs[0].data() as UserDocument;
+      if (studentData.isActive) {
+        return { email: "", isValid: false };
+      }
+
+      return { email, isValid: true };
+    } catch (error) {
+      return { email: "", isValid: false };
+    }
+  }
+
+  private generateToken(user: StudentProfile): string {
+    return jwt.sign(user, process.env.JWT_SECRET!, { expiresIn: "24h" });
   }
 }

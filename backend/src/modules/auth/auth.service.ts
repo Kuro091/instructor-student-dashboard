@@ -15,7 +15,7 @@ const CODE_EXPIRY_MS = CODE_EXPIRY_MINUTES * 60 * 1000;
 const MIN_CODE = 100000;
 const MAX_CODE = 999999;
 const DEFAULT_USER_NAME = "New User";
-const DEFAULT_ROLE = Role.STUDENT;
+const DEFAULT_ROLE = Role.INSTRUCTOR;
 const TOKEN_EXPIRY = "24h";
 
 export class AuthService {
@@ -67,7 +67,28 @@ export class AuthService {
       .get();
 
     if (userQuery.empty) {
-      return null; // User must exist - no self-registration
+      const newUserData: Omit<UserDocument, "id"> = {
+        phone: phoneNumber,
+        name: DEFAULT_USER_NAME,
+        role: DEFAULT_ROLE,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const newUserRef = await db
+        .collection(COLLECTIONS.USERS)
+        .add(newUserData);
+      const newUserDoc = await newUserRef.get();
+      const newUserDocData = newUserDoc.data() as UserDocument;
+
+      return {
+        id: newUserDoc.id,
+        phone: newUserDocData.phone,
+        email: newUserDocData.email,
+        name: newUserDocData.name,
+        role: newUserDocData.role as Role,
+      };
     }
 
     const userDoc = userQuery.docs[0];

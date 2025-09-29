@@ -18,7 +18,8 @@ import {
   NotFoundError,
   AppError,
 } from "../../shared/utils/error.utils";
-import { generateRandomPassword } from "../../shared/utils/auth.utils";
+import { TokenPurpose } from "../student/student-auth.service";
+import jwt from "jsonwebtoken";
 
 export class InstructorService {
   async addStudent(data: AddStudentRequest): Promise<Student> {
@@ -252,14 +253,20 @@ export class InstructorService {
       return;
     }
 
-    const setupLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/student-setup?email=${encodeURIComponent(email)}`;
+    const setupToken = jwt.sign(
+      { email, purpose: TokenPurpose.STUDENT_SETUP },
+      process.env.JWT_SECRET!,
+      { expiresIn: "24h" },
+    );
+
+    const setupLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/student-setup?token=${setupToken}`;
 
     try {
       await emailTransporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Welcome to Classroom Management - Account Setup Required",
-        text: `Hello ${name},\n\nWelcome to our classroom management system!\n\nYour instructor has added you to the classroom. To complete your account setup and access your student dashboard, please follow these steps:\n\n1. Click the setup link: ${setupLink}\n2. Create your username and password\n3. Complete your account setup\n4. Log in with your new credentials\n\nYou will then be able to view your assigned lessons and communicate with your instructor.\n\nBest regards,\nThe Classroom Team`,
+        text: `Hello ${name},\n\nWelcome to our classroom management system!\n\nYour instructor has added you to the classroom. To complete your account setup and access your student dashboard, please follow these steps:\n\n1. Click the secure setup link: ${setupLink}\n2. Create your username and password\n3. Complete your account setup\n4. Log in with your new credentials\n\n⚠️ IMPORTANT: This link is secure and expires in 24 hours. Do not share it with anyone.\n\nYou will then be able to view your assigned lessons and communicate with your instructor.\n\nBest regards,\nThe Classroom Team`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Welcome to Classroom Management!</h2>
@@ -267,13 +274,16 @@ export class InstructorService {
             <p>Welcome to our classroom management system!</p>
             <p>Your instructor has added you to the classroom. To complete your account setup and access your student dashboard, please follow these steps:</p>
             <ol>
-              <li>Click the setup link below</li>
+              <li>Click the secure setup link below</li>
               <li>Create your username and password</li>
               <li>Complete your account setup</li>
               <li>Log in with your new credentials</li>
             </ol>
             <div style="text-align: center; margin: 30px 0;">
               <a href="${setupLink}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Account Setup</a>
+            </div>
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <strong>⚠️ Security Notice:</strong> This link is secure and expires in 24 hours. Do not share it with anyone.
             </div>
             <p>You will then be able to view your assigned lessons and communicate with your instructor.</p>
             <p>Best regards,<br>The Classroom Team</p>
