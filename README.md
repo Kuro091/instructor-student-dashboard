@@ -44,6 +44,7 @@ A real-time classroom management tool that enables instructors to efficiently ma
 
 
 ### Real-time Chat
+<img width="1707" height="1007" alt="image" src="https://github.com/user-attachments/assets/3cf4664f-cafe-4206-8def-05ebfcd8ad6b" />
 
 
 ## Project Structure
