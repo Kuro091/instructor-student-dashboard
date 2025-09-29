@@ -123,6 +123,31 @@ Server will start on `http://localhost:5000`
 - `POST /api/student/markLessonDone` - Mark lesson as completed (JWT-based)
 - `PUT /api/student/editProfile` - Update student profile (JWT-based)
 
+### Chat Routes
+
+- `POST /api/chat/send` - Send message to another user (JWT-based)
+- `GET /api/chat/conversation/:participantId` - Get conversation with specific user (JWT-based)
+- `GET /api/chat/conversations` - Get all user conversations (JWT-based)
+- `POST /api/chat/mark-read` - Mark message as read (JWT-based)
+
+### Real-time Chat (Socket.io)
+
+**Connection**: Connect to Socket.io server with JWT token in auth
+**Events**:
+
+- `send_message` - Send a message to another user
+- `new_message` - Receive a new message
+- `message_sent` - Confirmation that message was sent
+- `typing_start` - User started typing
+- `typing_stop` - User stopped typing
+- `user_typing` - Another user is typing
+- `user_stopped_typing` - Another user stopped typing
+- `mark_message_read` - Mark a message as read
+- `message_read` - Confirmation that message was marked as read
+- `check_user_status` - Check if a user is online
+- `user_status` - Response with user online status
+- `connected` - Confirmation of successful connection
+
 ### Health Check
 
 - `GET /health` - Server status
@@ -136,10 +161,11 @@ src/
 │   ├── instructor/   # Instructor features
 │   ├── student/      # Student features
 │   │   └── student-auth/ # Student username/password auth
-│   └── chat/         # Real-time chat (planned)
+│   └── chat/         # Real-time chat with Socket.io
 ├── shared/           # Shared utilities
 │   ├── config/       # Configuration files
 │   ├── middleware/    # Express middleware
+│   ├── socket/        # Socket.io management
 │   ├── types/         # TypeScript types
 │   └── utils/         # Utility functions
 ├── app.ts            # Express app setup
@@ -170,8 +196,8 @@ The project uses strict TypeScript configuration with:
 - `users` - User accounts and profiles (instructors and students)
 - `accessCodes` - SMS verification codes
 - `lessons` - Course lessons and assignments (one-to-many)
-- `conversations` - Chat conversations (planned)
-- `messages` - Chat messages (planned)
+- `conversations` - Chat conversations between users
+- `messages` - Individual chat messages with persistence
 
 ## Docker
 
