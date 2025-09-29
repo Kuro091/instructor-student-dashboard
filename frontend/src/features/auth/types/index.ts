@@ -3,7 +3,7 @@ export interface User {
   phone: string
   email: string
   name: string
-  role: 'instructor' | 'student'
+  role: 'INSTRUCTOR' | 'STUDENT'
   createdAt: string
   updatedAt: string
 }
@@ -13,6 +13,7 @@ export interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  error: string | null
 }
 
 export interface LoginRequest {
@@ -22,8 +23,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: User
-  token: string
+  success: boolean
+  data: {
+    user: User
+  }
+  message: string
 }
 
 export interface CreateAccessCodeRequest {
@@ -38,6 +42,9 @@ export interface StudentSetupRequest {
 }
 
 export interface StudentSetupResponse {
-  user: User
-  token: string
+  success: boolean
+  data: {
+    user: User
+  }
+  message: string
 }

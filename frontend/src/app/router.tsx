@@ -1,9 +1,12 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Provider } from './provider'
 import { routes } from './routes'
+import { ProtectedRoute } from './protected-route'
+import { HomePage } from './home-page'
+import { LoginPage } from '@/features/auth/components/login-page'
+import { VerificationPage } from '@/features/auth/components/verification-page'
 
-const LoginPage = () => <div>Login Page</div>
-const VerifyPage = () => <div>Verify Page</div>
+
 const StudentSetupPage = () => <div>Student Setup Page</div>
 const InstructorDashboard = () => <div>Instructor Dashboard</div>
 const InstructorStudents = () => <div>Instructor Students</div>
@@ -18,53 +21,115 @@ const NotFoundPage = () => <div>404 Not Found</div>
 
 const router = createBrowserRouter([
   {
+    path: routes.home,
+    element: <HomePage />,
+  },
+  
+  // Public routes 
+  {
     path: routes.login,
-    element: <LoginPage />,
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <LoginPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.verify,
-    element: <VerifyPage />,
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <VerificationPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.studentSetup,
-    element: <StudentSetupPage />,
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <StudentSetupPage />
+      </ProtectedRoute>
+    ),
   },
+  
+  // Instructor routes 
   {
     path: routes.instructor.dashboard,
-    element: <InstructorDashboard />,
+    element: (
+      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
+        <InstructorDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.instructor.students,
-    element: <InstructorStudents />,
+    element: (
+      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
+        <InstructorStudents />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.instructor.studentProfile,
-    element: <InstructorStudentProfile />,
+    element: (
+      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
+        <InstructorStudentProfile />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.instructor.lessons,
-    element: <InstructorLessons />,
+    element: (
+      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
+        <InstructorLessons />
+      </ProtectedRoute>
+    ),
   },
+  
+  // Student routes 
   {
     path: routes.student.dashboard,
-    element: <StudentDashboard />,
+    element: (
+      <ProtectedRoute allowedRoles={['STUDENT']}>
+        <StudentDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.student.lesson,
-    element: <StudentLesson />,
+    element: (
+      <ProtectedRoute allowedRoles={['STUDENT']}>
+        <StudentLesson />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.student.profile,
-    element: <StudentProfile />,
+    element: (
+      <ProtectedRoute allowedRoles={['STUDENT']}>
+        <StudentProfile />
+      </ProtectedRoute>
+    ),
   },
+  
+  // Chat routes
   {
     path: routes.chat.list,
-    element: <ChatList />,
+    element: (
+      <ProtectedRoute>
+        <ChatList />
+      </ProtectedRoute>
+    ),
   },
   {
     path: routes.chat.conversation,
-    element: <ChatConversation />,
+    element: (
+      <ProtectedRoute>
+        <ChatConversation />
+      </ProtectedRoute>
+    ),
   },
+  
+  // Error routes
   {
     path: routes.notFound,
     element: <NotFoundPage />,

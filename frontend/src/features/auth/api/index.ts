@@ -8,7 +8,6 @@ import type {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-// Generic fetch wrapper with error handling
 async function apiRequest<T>(
   endpoint: string, 
   options: RequestInit = {}
@@ -20,6 +19,7 @@ async function apiRequest<T>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    credentials: 'include',
     ...options,
   })
 
@@ -34,7 +34,7 @@ export const authApi = {
   createAccessCode: async (data: CreateAccessCodeRequest) => {
     return apiRequest('/api/auth/createAccessCode', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ phoneNumber: data.phone }),
     })
   },
 
@@ -46,9 +46,13 @@ export const authApi = {
   },
 
   validateAccessCode: async (data: LoginRequest): Promise<LoginResponse> => {
+    const requestData = data.phone 
+      ? { phoneNumber: data.phone, accessCode: data.accessCode }
+      : { email: data.email, accessCode: data.accessCode }
+    
     return apiRequest('/api/auth/validateAccessCode', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestData),
     })
   },
 
@@ -67,6 +71,12 @@ export const authApi = {
     return apiRequest('/api/student-auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+  },
+
+  logout: async () => {
+    return apiRequest('/api/auth/logout', {
+      method: 'POST',
     })
   },
 }

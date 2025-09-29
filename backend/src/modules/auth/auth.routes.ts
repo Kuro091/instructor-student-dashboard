@@ -11,5 +11,9 @@ router.post("/validateAccessCode", (req, res) =>
   authController.validateAccessCode(req, res),
 );
 router.post("/loginEmail", (req, res) => authController.loginEmail(req, res));
+router.post("/logout", (req, res) => authController.logout(req, res));
+router.get("/validate-token", (req, res) =>
+  authController.validateToken(req, res),
+);
 
 export default router;
