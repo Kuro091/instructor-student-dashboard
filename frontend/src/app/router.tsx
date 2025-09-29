@@ -6,10 +6,11 @@ import { HomePage } from './home-page'
 import { LoginPage } from '@/features/auth/components/login-page'
 import { VerificationPage } from '@/features/auth/components/verification-page'
 import { StudentSetupPage } from '@/features/auth/components/student-setup-page'
+import { InstructorDashboard } from '@/features/instructor/components/instructor-dashboard'
+import { InstructorLayout } from '@/features/instructor/components/instructor-layout'
 
 
 const StudentSetupPageComponent = () => <StudentSetupPage />
-const InstructorDashboard = () => <div>Instructor Dashboard</div>
 const InstructorStudents = () => <div>Instructor Students</div>
 const InstructorStudentProfile = () => <div>Instructor Student Profile</div>
 const InstructorLessons = () => <div>Instructor Lessons</div>
@@ -54,36 +55,30 @@ const router = createBrowserRouter([
   
   // Instructor routes 
   {
-    path: routes.instructor.dashboard,
+    path: '/instructor',
     element: (
       <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
-        <InstructorDashboard />
+        <InstructorLayout />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: routes.instructor.students,
-    element: (
-      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
-        <InstructorStudents />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: routes.instructor.studentProfile,
-    element: (
-      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
-        <InstructorStudentProfile />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: routes.instructor.lessons,
-    element: (
-      <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
-        <InstructorLessons />
-      </ProtectedRoute>
-    ),
+    children: [
+      {
+        path: '',
+        element: <InstructorDashboard />,
+      },
+      {
+        path: 'students',
+        element: <InstructorStudents />,
+      },
+      {
+        path: 'student/:phone',
+        element: <InstructorStudentProfile />,
+      },
+      {
+        path: 'lessons',
+        element: <InstructorLessons />,
+      },
+    ],
   },
   
   // Student routes 

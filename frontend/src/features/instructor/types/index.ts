@@ -3,22 +3,27 @@ export interface Student {
   phone: string
   email: string
   name: string
-  role: 'student'
+  role: 'STUDENT'
   isActive: boolean
   createdAt: string
   updatedAt: string
-  lessons?: Lesson[]
 }
 
 export interface Lesson {
-  id: string
+  lessonId: string
   title: string
   description: string
   studentPhone: string
-  assignedBy: string
-  status: 'pending' | 'completed'
+  assignedBy: string // instructor phone
   createdAt: string
-  updatedAt: string
+  status: 'pending' | 'completed'
+}
+
+export interface InstructorStats {
+  totalStudents: number
+  activeLessons: number
+  completedLessons: number
+  pendingLessons: number
 }
 
 export interface AddStudentRequest {
@@ -27,20 +32,19 @@ export interface AddStudentRequest {
   email: string
 }
 
-export interface EditStudentRequest {
-  name?: string
-  email?: string
-}
-
 export interface AssignLessonRequest {
   title: string
   description: string
-  studentPhones: string[]
+  studentPhone: string
 }
 
-export interface InstructorState {
-  students: Student[]
-  lessons: Lesson[]
-  isLoading: boolean
-  error: string | null
+export interface ApiResponse<T> {
+  success: boolean
+  data: T
+  message: string
+}
+
+export interface ApiError {
+  success: false
+  error: string
 }

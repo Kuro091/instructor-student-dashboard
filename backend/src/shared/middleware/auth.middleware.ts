@@ -16,7 +16,15 @@ export const authenticateToken = (
   next: NextFunction,
 ) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  let token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    const cookieHeader = req.headers.cookie;
+    if (cookieHeader) {
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      token = tokenMatch ? tokenMatch[1] : undefined;
+    }
+  }
 
   if (!token) {
     return res

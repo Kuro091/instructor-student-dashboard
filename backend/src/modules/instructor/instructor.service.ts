@@ -1,4 +1,5 @@
 import { db, COLLECTIONS } from "../../shared/config/firebase";
+import { Timestamp } from "firebase-admin/firestore";
 import { emailTransporter } from "../../shared/config/email";
 import {
   AddStudentRequest,
@@ -57,8 +58,15 @@ export class InstructorService {
       phone: studentData.phone,
       email: studentData.email,
       role: studentData.role,
-      createdAt: studentData.createdAt,
-      updatedAt: studentData.updatedAt,
+      isActive: studentData.isActive,
+      createdAt:
+        studentData.createdAt instanceof Date
+          ? studentData.createdAt.toISOString()
+          : (studentData.createdAt as Timestamp).toDate().toISOString(),
+      updatedAt:
+        studentData.updatedAt instanceof Date
+          ? studentData.updatedAt.toISOString()
+          : (studentData.updatedAt as Timestamp).toDate().toISOString(),
     };
   }
 
@@ -122,8 +130,15 @@ export class InstructorService {
         phone: data.phone,
         email: data.email,
         role: data.role,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
+        isActive: data.isActive,
+        createdAt:
+          data.createdAt instanceof Date
+            ? data.createdAt.toISOString()
+            : (data.createdAt as Timestamp).toDate().toISOString(),
+        updatedAt:
+          data.updatedAt instanceof Date
+            ? data.updatedAt.toISOString()
+            : (data.updatedAt as Timestamp).toDate().toISOString(),
       };
     });
   }
@@ -168,8 +183,15 @@ export class InstructorService {
       phone: studentData.phone,
       email: studentData.email,
       role: studentData.role,
-      createdAt: studentData.createdAt,
-      updatedAt: studentData.updatedAt,
+      isActive: studentData.isActive,
+      createdAt:
+        studentData.createdAt instanceof Date
+          ? studentData.createdAt.toISOString()
+          : (studentData.createdAt as Timestamp).toDate().toISOString(),
+      updatedAt:
+        studentData.updatedAt instanceof Date
+          ? studentData.updatedAt.toISOString()
+          : (studentData.updatedAt as Timestamp).toDate().toISOString(),
       lessons,
     };
   }
@@ -201,8 +223,15 @@ export class InstructorService {
       phone: updatedData.phone,
       email: updatedData.email,
       role: updatedData.role,
-      createdAt: updatedData.createdAt,
-      updatedAt: updatedData.updatedAt,
+      isActive: updatedData.isActive,
+      createdAt:
+        updatedData.createdAt instanceof Date
+          ? updatedData.createdAt.toISOString()
+          : (updatedData.createdAt as Timestamp).toDate().toISOString(),
+      updatedAt:
+        updatedData.updatedAt instanceof Date
+          ? updatedData.updatedAt.toISOString()
+          : (updatedData.updatedAt as Timestamp).toDate().toISOString(),
     };
   }
 

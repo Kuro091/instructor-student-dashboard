@@ -23,8 +23,9 @@ export interface Student {
   phone: string;
   email?: string;
   role: Role;
-  createdAt: Date;
-  updatedAt: Date;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Lesson {

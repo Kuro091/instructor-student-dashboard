@@ -1,8 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PhoneInputComponent } from '@/components/ui/phone-input'
@@ -11,14 +9,10 @@ import { Label } from '@/components/ui/label'
 import { useCreateAccessCode, useLoginEmail } from '../hooks/use-auth-queries'
 import { routes } from '@/app/routes'
 
-const loginSchema = z.object({
-  phone: z.string().optional(),
-  email: z.email('Please enter a valid email address').optional(),
-}).refine(data => data.phone || data.email, {
-  message: "Either phone or email is required",
-})
-
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = {
+  phone?: string
+  email?: string
+}
 
 export function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone')
@@ -28,23 +22,38 @@ export function LoginPage() {
   const loginEmailMutation = useLoginEmail()
 
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
     defaultValues: {
       phone: '',
       email: ''
     }
   })
 
+  useEffect(() => {
+    form.clearErrors()
+  }, [loginMethod, form])
+
   const onSubmit = async (data: LoginFormData) => {
       if (loginMethod === 'phone') {
-        await createAccessCodeMutation.mutateAsync({ phone: data.phone! })
+        if (!data.phone || data.phone.trim() === '') {
+          form.setError('phone', { message: 'Phone number is required' })
+          return
+        }
+        await createAccessCodeMutation.mutateAsync({ phone: data.phone })
       } else {
-        await loginEmailMutation.mutateAsync({ email: data.email! })
+        if (!data.email || data.email.trim() === '') {
+          form.setError('email', { message: 'Email is required' })
+          return
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(data.email)) {
+          form.setError('email', { message: 'Please enter a valid email address' })
+          return
+        }
+        await loginEmailMutation.mutateAsync({ email: data.email })
       }
       
       const value = loginMethod === 'phone' ? data.phone! : data.email!
       navigate(routes.verify, { state: { method: loginMethod, value } })
-    
   }
 
   return (
