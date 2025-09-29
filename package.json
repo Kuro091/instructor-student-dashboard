@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "A real-time classroom management tool for instructors and students",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend",
-    "shared"
-  ],
   "scripts": {
     "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
     "dev:frontend": "cd frontend && pnpm run dev",
