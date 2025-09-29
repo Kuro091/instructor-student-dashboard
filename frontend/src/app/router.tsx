@@ -54,7 +54,7 @@ const router = createBrowserRouter([
   
   // Instructor routes 
   {
-    path: '/instructor',
+    path: routes.instructor.dashboard,
     element: (
       <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
         <SidebarLayout />
@@ -66,15 +66,15 @@ const router = createBrowserRouter([
         element: <InstructorDashboard />,
       },
       {
-        path: 'students',
+        path: routes.instructor.students,
         element: <StudentManagement />,
       },
       {
-        path: 'student/:phone',
+        path: routes.instructor.studentProfile,
         element: <StudentProfile />,
       },
       {
-        path: 'lessons',
+        path: routes.instructor.lessons,
         element: <LessonAssignment />,
       },
     ],
@@ -82,7 +82,7 @@ const router = createBrowserRouter([
   
   // Student routes 
   {
-    path: '/student',
+    path: routes.student.dashboard,
     element: (
       <ProtectedRoute allowedRoles={['STUDENT']}>
         <SidebarLayout />
@@ -94,11 +94,11 @@ const router = createBrowserRouter([
         element: <StudentDashboard />,
       },
       {
-        path: 'lesson/:id',
+        path: routes.student.lesson,
         element: <StudentLesson />,
       },
       {
-        path: 'profile',
+        path: routes.student.profile,
         element: <StudentProfile />,
       },
     ],
@@ -118,7 +118,7 @@ const router = createBrowserRouter([
         element: <ChatListPage />,
       },
       {
-        path: ':participantId',
+        path: routes.chat.conversation,
         element: <ChatConversationPage />,
       },
     ],

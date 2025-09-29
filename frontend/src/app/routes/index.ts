@@ -7,20 +7,20 @@ export const routes = {
   
   instructor: {
     dashboard: '/instructor',
-    students: '/instructor/students',
-    studentProfile: '/instructor/student/:phone',
-    lessons: '/instructor/lessons',
+    students: 'students',
+    studentProfile: 'student/:phone',
+    lessons: 'lessons',
   },
   
   student: {
     dashboard: '/student',
-    lesson: '/student/lesson/:id',
-    profile: '/student/profile',
+    lesson: 'lesson/:id',
+    profile: 'profile',
   },
   
   chat: {
     list: '/chat',
-    conversation: '/chat/:participantId',
+    conversation: ':participantId',
   },
   
   
