@@ -3,9 +3,62 @@ import { Server as HTTPServer } from "http";
 import jwt from "jsonwebtoken";
 import { SocketManager } from "./socket.manager";
 import { ChatService } from "../../modules/chat/chat.service";
-import { SocketMessage } from "../../modules/chat/chat.types";
+import {
+  SocketMessage,
+  SendMessageRequest,
+  MarkMessageReadRequest,
+} from "../../modules/chat/chat.types";
 import { AuthenticatedSocket } from "./socket.manager";
 import { AuthUser } from "../../modules/auth/auth.types";
+
+export const SOCKET_EVENTS = {
+  SEND_MESSAGE: "send_message",
+  TYPING_START: "typing_start",
+  TYPING_STOP: "typing_stop",
+  MARK_MESSAGE_READ: "mark_message_read",
+  CHECK_USER_STATUS: "check_user_status",
+  CONNECTED: "connected",
+  NEW_MESSAGE: "new_message",
+  MESSAGE_SENT: "message_sent",
+  MESSAGE_READ: "message_read",
+  USER_TYPING: "user_typing",
+  USER_STATUS: "user_status",
+  ERROR: "error",
+} as const;
+interface SendMessageData extends SendMessageRequest {}
+
+interface TypingData {
+  receiverId: string;
+}
+
+interface MarkMessageReadData extends MarkMessageReadRequest {}
+
+interface CheckUserStatusData {
+  userId: string;
+}
+
+interface UserTypingEvent {
+  userId: string;
+  isTyping: boolean;
+}
+
+interface UserStatusEvent {
+  userId: string;
+  isOnline: boolean;
+}
+
+interface MessageReadEvent {
+  messageId: string;
+}
+
+interface ConnectedEvent {
+  message: string;
+  userId: string;
+}
+
+interface ErrorEvent {
+  message: string;
+}
 
 export class SocketService {
   private io: SocketIOServer;
@@ -32,9 +85,17 @@ export class SocketService {
   private setupSocketHandlers(): void {
     this.io.use((socket, next) => {
       try {
-        const token =
+        let token =
           socket.handshake.auth.token ||
           socket.handshake.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+          const cookieHeader = socket.handshake.headers.cookie;
+          if (cookieHeader) {
+            const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+            token = tokenMatch ? tokenMatch[1] : undefined;
+          }
+        }
 
         if (!token) {
           return next(new Error("Authentication token required"));
@@ -50,24 +111,22 @@ export class SocketService {
 
     this.io.on("connection", (socket) => {
       const authSocket = socket as AuthenticatedSocket;
-      console.log(
-        `User connected: ${authSocket.user?.name} (${authSocket.id})`,
-      );
 
       this.socketManager.addUser(authSocket);
       authSocket.join(`user_${authSocket.user!.id}`);
 
-      authSocket.emit("connected", {
+      authSocket.emit(SOCKET_EVENTS.CONNECTED, {
         message: "Connected successfully",
         userId: authSocket.user!.id,
-      });
-
+      } as ConnectedEvent);
       authSocket.on(
-        "send_message",
-        async (data: { receiverId: string; content: string }) => {
+        SOCKET_EVENTS.SEND_MESSAGE,
+        async (data: SendMessageData) => {
           try {
             if (!authSocket.user) {
-              authSocket.emit("error", { message: "User not authenticated" });
+              authSocket.emit(SOCKET_EVENTS.ERROR, {
+                message: "User not authenticated",
+              } as ErrorEvent);
               return;
             }
 
@@ -89,59 +148,65 @@ export class SocketService {
               timestamp: message.timestamp,
             };
 
-            authSocket.emit("message_sent", socketMessage);
+            authSocket.emit(SOCKET_EVENTS.MESSAGE_SENT, socketMessage);
+            authSocket.emit(SOCKET_EVENTS.NEW_MESSAGE, socketMessage);
 
             const receiverSocketId = this.socketManager.getUserSocketId(
               data.receiverId,
             );
             if (receiverSocketId) {
-              this.io.to(receiverSocketId).emit("new_message", socketMessage);
+              this.io
+                .to(receiverSocketId)
+                .emit(SOCKET_EVENTS.NEW_MESSAGE, socketMessage);
             }
 
             this.io
               .to(`user_${data.receiverId}`)
-              .emit("new_message", socketMessage);
+              .emit(SOCKET_EVENTS.NEW_MESSAGE, socketMessage);
           } catch (error) {
             console.error("Error sending message:", error);
-            authSocket.emit("error", {
+            authSocket.emit(SOCKET_EVENTS.ERROR, {
               message:
                 error instanceof Error
                   ? error.message
                   : "Failed to send message",
-            });
+            } as ErrorEvent);
           }
         },
       );
 
-      authSocket.on("typing_start", (data: { receiverId: string }) => {
+      authSocket.on(SOCKET_EVENTS.TYPING_START, (data: TypingData) => {
         const receiverSocketId = this.socketManager.getUserSocketId(
           data.receiverId,
         );
         if (receiverSocketId) {
-          this.io.to(receiverSocketId).emit("user_typing", {
-            senderId: authSocket.user!.id,
-            senderName: authSocket.user!.name,
-          });
+          this.io.to(receiverSocketId).emit(SOCKET_EVENTS.USER_TYPING, {
+            userId: authSocket.user!.id,
+            isTyping: true,
+          } as UserTypingEvent);
         }
       });
 
-      authSocket.on("typing_stop", (data: { receiverId: string }) => {
+      authSocket.on(SOCKET_EVENTS.TYPING_STOP, (data: TypingData) => {
         const receiverSocketId = this.socketManager.getUserSocketId(
           data.receiverId,
         );
         if (receiverSocketId) {
-          this.io.to(receiverSocketId).emit("user_stopped_typing", {
-            senderId: authSocket.user!.id,
-          });
+          this.io.to(receiverSocketId).emit(SOCKET_EVENTS.USER_TYPING, {
+            userId: authSocket.user!.id,
+            isTyping: false,
+          } as UserTypingEvent);
         }
       });
 
       authSocket.on(
-        "mark_message_read",
-        async (data: { messageId: string }) => {
+        SOCKET_EVENTS.MARK_MESSAGE_READ,
+        async (data: MarkMessageReadData) => {
           try {
             if (!authSocket.user) {
-              authSocket.emit("error", { message: "User not authenticated" });
+              authSocket.emit(SOCKET_EVENTS.ERROR, {
+                message: "User not authenticated",
+              } as ErrorEvent);
               return;
             }
 
@@ -150,26 +215,31 @@ export class SocketService {
               authSocket.user.id,
             );
 
-            authSocket.emit("message_read", { messageId: data.messageId });
+            authSocket.emit(SOCKET_EVENTS.MESSAGE_READ, {
+              messageId: data.messageId,
+            } as MessageReadEvent);
           } catch (error) {
             console.error("Error marking message as read:", error);
-            authSocket.emit("error", {
+            authSocket.emit(SOCKET_EVENTS.ERROR, {
               message:
                 error instanceof Error
                   ? error.message
                   : "Failed to mark message as read",
-            });
+            } as ErrorEvent);
           }
         },
       );
 
-      authSocket.on("check_user_status", (data: { userId: string }) => {
-        const isOnline = this.socketManager.isUserOnline(data.userId);
-        authSocket.emit("user_status", {
-          userId: data.userId,
-          isOnline,
-        });
-      });
+      authSocket.on(
+        SOCKET_EVENTS.CHECK_USER_STATUS,
+        (data: CheckUserStatusData) => {
+          const isOnline = this.socketManager.isUserOnline(data.userId);
+          authSocket.emit(SOCKET_EVENTS.USER_STATUS, {
+            userId: data.userId,
+            isOnline,
+          } as UserStatusEvent);
+        },
+      );
 
       authSocket.on("disconnect", () => {
         console.log(

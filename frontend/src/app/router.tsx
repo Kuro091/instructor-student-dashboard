@@ -7,17 +7,17 @@ import { LoginPage } from '@/features/auth/components/login-page'
 import { VerificationPage } from '@/features/auth/components/verification-page'
 import { StudentSetupPage } from '@/features/auth/components/student-setup-page'
 import { InstructorDashboard } from '@/features/instructor/components/instructor-dashboard'
-import { InstructorLayout } from '@/features/instructor/components/instructor-layout'
 import { StudentManagement } from '@/features/instructor/components/student-management'
 import { StudentProfile } from '@/features/instructor/components/student-profile'
 import { LessonAssignment } from '@/features/instructor/components/lesson-assignment'
+import { ChatListPage } from '@/features/chat/pages/chat-list-page'
+import { ChatConversationPage } from '@/features/chat/pages/chat-conversation-page'
+import { SidebarLayout } from '@/features/chat/components/sidebar-layout'
 
 
 const StudentSetupPageComponent = () => <StudentSetupPage />
 const StudentDashboard = () => <div>Student Dashboard</div>
 const StudentLesson = () => <div>Student Lesson</div>
-const ChatList = () => <div>Chat List</div>
-const ChatConversation = () => <div>Chat Conversation</div>
 const NotFoundPage = () => <div>404 Not Found</div>
 
 const router = createBrowserRouter([
@@ -57,7 +57,7 @@ const router = createBrowserRouter([
     path: '/instructor',
     element: (
       <ProtectedRoute allowedRoles={['INSTRUCTOR']}>
-        <InstructorLayout />
+        <SidebarLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -82,46 +82,46 @@ const router = createBrowserRouter([
   
   // Student routes 
   {
-    path: routes.student.dashboard,
+    path: '/student',
     element: (
       <ProtectedRoute allowedRoles={['STUDENT']}>
-        <StudentDashboard />
+        <SidebarLayout />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: routes.student.lesson,
-    element: (
-      <ProtectedRoute allowedRoles={['STUDENT']}>
-        <StudentLesson />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: routes.student.profile,
-    element: (
-      <ProtectedRoute allowedRoles={['STUDENT']}>
-        <StudentProfile />
-      </ProtectedRoute>
-    ),
+    children: [
+      {
+        path: '',
+        element: <StudentDashboard />,
+      },
+      {
+        path: 'lesson/:id',
+        element: <StudentLesson />,
+      },
+      {
+        path: 'profile',
+        element: <StudentProfile />,
+      },
+    ],
   },
   
-  // Chat routes
+  // Chat routes (shared between instructors and students)
   {
     path: routes.chat.list,
     element: (
       <ProtectedRoute>
-        <ChatList />
+        <SidebarLayout />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: routes.chat.conversation,
-    element: (
-      <ProtectedRoute>
-        <ChatConversation />
-      </ProtectedRoute>
-    ),
+    children: [
+      {
+        path: '',
+        element: <ChatListPage />,
+      },
+      {
+        path: ':participantId',
+        element: <ChatConversationPage />,
+      },
+    ],
   },
   
   // Error routes

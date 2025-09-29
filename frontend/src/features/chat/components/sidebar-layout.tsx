@@ -12,22 +12,33 @@ import {
   BookOpen, 
   MessageSquare, 
   LogOut, 
-  Menu
+  Menu,
+  ArrowLeft
 } from 'lucide-react'
 
-const navigation = [
+const instructorNavigation = [
   { name: 'Dashboard', href: routes.instructor.dashboard, icon: LayoutDashboard },
   { name: 'Students', href: routes.instructor.students, icon: Users },
   { name: 'Lessons', href: routes.instructor.lessons, icon: BookOpen },
   { name: 'Messages', href: routes.chat.list, icon: MessageSquare },
 ]
 
-export function InstructorLayout() {
+const studentNavigation = [
+  { name: 'Dashboard', href: routes.student.dashboard, icon: LayoutDashboard },
+  { name: 'Lessons', href: routes.student.lesson, icon: BookOpen },
+  { name: 'Profile', href: routes.student.profile, icon: Users },
+  { name: 'Messages', href: routes.chat.list, icon: MessageSquare },
+]
+
+export function SidebarLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const isInstructor = user?.role === 'INSTRUCTOR'
+  const navigation = isInstructor ? instructorNavigation : studentNavigation
 
   const handleLogout = async () => {
     await logout()
@@ -38,14 +49,15 @@ export function InstructorLayout() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
   }
 
+
   return (
     <div className="bg-gray-50 min-h-screen">
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-64">
-            <div className="flex flex-col h-full">
-              <div className="flex justify-between items-center px-6 h-16">
-                <h1 className="font-bold text-primary text-xl">Classroom</h1>
-              </div>
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-64">
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between items-center px-6 h-16">
+              <h1 className="font-bold text-primary text-xl">Classroom</h1>
+            </div>
             <nav className="flex-1 space-y-1 px-3 py-4">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href
@@ -104,14 +116,27 @@ export function InstructorLayout() {
 
       <div className={`flex-1 transition-all duration-300 ${desktopSidebarOpen ? 'lg:pl-64' : 'lg:pl-16'}`}>
         <div className="top-0 z-40 sticky flex justify-between items-center bg-white shadow-sm px-4 sm:px-6 lg:px-8 border-gray-200 border-b h-16 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </Button>
+            {location.pathname.startsWith('/chat/') && location.pathname !== routes.chat.list && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(routes.chat.list)}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Messages
+              </Button>
+            )}
+          </div>
 
           <div className="flex-1"></div>
 
@@ -123,7 +148,7 @@ export function InstructorLayout() {
               </Avatar>
               <div className="text-left">
                 <p className="font-medium text-gray-900 text-sm">{user?.name}</p>
-                <p className="text-gray-500 text-xs">Instructor</p>
+                <p className="text-gray-500 text-xs">{isInstructor ? 'Instructor' : 'Student'}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4" />

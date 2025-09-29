@@ -91,13 +91,11 @@ export class ChatService {
       const instructorConversationsQuery = await db
         .collection(this.conversationsCollection)
         .where("participants.instructorId", "==", userId)
-        .orderBy("lastMessageAt", "desc")
         .get();
 
       const studentConversationsQuery = await db
         .collection(this.conversationsCollection)
         .where("participants.studentId", "==", userId)
-        .orderBy("lastMessageAt", "desc")
         .get();
 
       const allConversations = [
@@ -112,8 +110,20 @@ export class ChatService {
             index === self.findIndex((c) => c.id === conv.id),
         )
         .sort((a, b) => {
-          const aTime = a.lastMessageAt?.getTime() || 0;
-          const bTime = b.lastMessageAt?.getTime() || 0;
+          const getTime = (
+            timestamp:
+              | Date
+              | { _seconds: number; _nanoseconds: number }
+              | undefined,
+          ) => {
+            if (!timestamp) return 0;
+            if (timestamp instanceof Date) return timestamp.getTime();
+            if ("_seconds" in timestamp) return timestamp._seconds * 1000;
+            return 0;
+          };
+
+          const aTime = getTime(a.lastMessageAt);
+          const bTime = getTime(b.lastMessageAt);
           return bTime - aTime;
         });
 

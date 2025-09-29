@@ -290,7 +290,7 @@ export function StudentManagement() {
                             <Edit className="mr-2 w-4 h-4" />
                             Edit Student
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(routes.chat.list)}>
+                          <DropdownMenuItem onClick={() => navigate(`${routes.chat.conversation.replace(':participantId', student.id)}`)}>
                             <MessageSquare className="mr-2 w-4 h-4" />
                             Send Message
                           </DropdownMenuItem>

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactNode } from 'react'
 import { AuthProvider } from '@/features/auth/stores/auth-context'
+import { ChatProvider } from '@/features/chat/stores/chat-store'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,7 +20,9 @@ export function Provider({ children }: ProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {children}
+        <ChatProvider>
+          {children}
+        </ChatProvider>
       </AuthProvider>
     </QueryClientProvider>
   )

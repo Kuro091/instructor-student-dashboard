@@ -23,5 +23,6 @@ export const routes = {
     conversation: '/chat/:participantId',
   },
   
+  
   notFound: '/404',
 } as const
