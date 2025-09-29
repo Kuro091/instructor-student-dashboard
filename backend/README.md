@@ -67,14 +67,58 @@ pnpm run dev
 
 Server will start on `http://localhost:5000`
 
+## Authentication Flow
+
+### Dual Authentication System
+
+**1. Phone + SMS Authentication (Instructors)**
+
+- Instructors use phone number + SMS verification
+- Self-registration allowed for instructors
+- JWT token returned upon successful verification
+
+**2. Username + Password Authentication (Students)**
+
+- Students are added by instructors via `/api/instructor/addStudent`
+- Email sent to student with account setup link
+- Student creates username/password via `/api/student-auth/setup`
+- Student logs in with username/password via `/api/student-auth/login`
+
+### Student Registration Process
+
+1. Instructor adds student → Student created with `isActive: false`
+2. Email sent to student with setup link
+3. Student clicks link → Account setup page
+4. Student creates username/password → Account activated
+5. Student can now log in with credentials
+
 ## API Endpoints
 
-### Authentication
+### Authentication (Phone + SMS)
 
 - `POST /api/auth/createAccessCode` - Send SMS verification code
-- `POST /api/auth/validateAccessCode` - Verify SMS code and login
-- `POST /api/auth/loginEmail` - Send email verification code
-- `POST /api/auth/validateEmailCode` - Verify email code and login
+- `POST /api/auth/validateAccessCode` - Verify SMS code and login (phone + SMS)
+
+### Student Authentication (Username + Password)
+
+- `POST /api/student-auth/setup` - Student account setup (email + username + password)
+- `POST /api/student-auth/login` - Student login (username + password)
+- `GET /api/student-auth/by-email/:email` - Get student by email
+
+### Instructor Routes
+
+- `POST /api/instructor/addStudent` - Add new student (name, phone, email)
+- `GET /api/instructor/students` - Get all students
+- `GET /api/instructor/student/:phone` - Get student details with lessons
+- `PUT /api/instructor/editStudent/:phone` - Update student
+- `DELETE /api/instructor/student/:phone` - Delete student
+- `POST /api/instructor/assignLesson` - Assign lesson to multiple students
+
+### Student Routes
+
+- `GET /api/student/myLessons?phone=xxx` - Get assigned lessons
+- `POST /api/student/markLessonDone` - Mark lesson as completed
+- `PUT /api/student/editProfile` - Update student profile
 
 ### Health Check
 
@@ -85,14 +129,16 @@ Server will start on `http://localhost:5000`
 ```
 src/
 ├── modules/           # Feature modules
-│   ├── auth/         # Authentication module
+│   ├── auth/         # Phone + SMS authentication
 │   ├── instructor/   # Instructor features
 │   ├── student/      # Student features
-│   └── chat/         # Real-time chat
+│   │   └── student-auth/ # Student username/password auth
+│   └── chat/         # Real-time chat (planned)
 ├── shared/           # Shared utilities
 │   ├── config/       # Configuration files
 │   ├── middleware/    # Express middleware
-│   └── types/         # TypeScript types
+│   ├── types/         # TypeScript types
+│   └── utils/         # Utility functions
 ├── app.ts            # Express app setup
 └── server.ts         # Server entry point
 ```
@@ -118,12 +164,11 @@ The project uses strict TypeScript configuration with:
 
 ### Firebase Collections
 
-- `users` - User accounts and profiles
-- `accessCodes` - SMS/email verification codes
-- `lessons` - Course lessons and assignments
-- `studentLessons` - Student lesson progress
-- `conversations` - Chat conversations
-- `messages` - Chat messages
+- `users` - User accounts and profiles (instructors and students)
+- `accessCodes` - SMS verification codes
+- `lessons` - Course lessons and assignments (one-to-many)
+- `conversations` - Chat conversations (planned)
+- `messages` - Chat messages (planned)
 
 ## Docker
 
@@ -148,4 +193,5 @@ docker-compose up backend
 | `EMAIL_PORT` | SMTP port | No |
 | `EMAIL_USER` | SMTP username | No |
 | `EMAIL_PASS` | SMTP password | No |
+| `FRONTEND_URL` | Frontend URL for email links | No (default: localhost:3000) |
 | `JWT_SECRET` | JWT signing secret | Yes |

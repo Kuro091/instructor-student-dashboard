@@ -1,5 +1,7 @@
 import { Role } from "../../modules/auth/auth.types";
 
+export { Role };
+
 export enum AccessCodeType {
   SMS = "SMS",
   EMAIL = "EMAIL",
@@ -21,7 +23,9 @@ export interface UserDocument {
   email?: string;
   name: string;
   role: Role;
-  password?: string; // for email-based student accounts
+  username?: string;
+  password?: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

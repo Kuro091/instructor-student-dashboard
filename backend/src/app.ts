@@ -4,6 +4,9 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import authRoutes from "./modules/auth/auth.routes";
+import instructorRoutes from "./modules/instructor/instructor.routes";
+import studentRoutes from "./modules/student/student.routes";
+import studentAuthRoutes from "./modules/student/student-auth.routes";
 import { errorHandler } from "./shared/middleware/error.middleware";
 
 const app: Express = express();
@@ -20,7 +23,10 @@ app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", authRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/instructor", instructorRoutes);
+app.use("/api/student", studentRoutes);
+app.use("/api/student-auth", studentAuthRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ success: true, message: "Server is running" });

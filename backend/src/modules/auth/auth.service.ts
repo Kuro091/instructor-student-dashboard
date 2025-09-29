@@ -49,6 +49,7 @@ export class AuthService {
       .where("identifier", "==", phoneNumber)
       .where("code", "==", accessCode)
       .where("expiresAt", ">", new Date())
+      .where("type", "==", AccessCodeType.SMS)
       .limit(1)
       .get();
 
@@ -65,23 +66,11 @@ export class AuthService {
       .limit(1)
       .get();
 
-    let userDoc;
     if (userQuery.empty) {
-      const newUserData: Omit<UserDocument, "id"> = {
-        phone: phoneNumber,
-        name: DEFAULT_USER_NAME,
-        role: DEFAULT_ROLE,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      const newUserRef = await db
-        .collection(COLLECTIONS.USERS)
-        .add(newUserData);
-      userDoc = await newUserRef.get();
-    } else {
-      userDoc = userQuery.docs[0];
+      return null; // User must exist - no self-registration
     }
 
+    const userDoc = userQuery.docs[0];
     const userData = userDoc.data() as UserDocument;
     return {
       id: userDoc.id,
