@@ -2,32 +2,49 @@
 
 A real-time classroom management tool that enables instructors to efficiently manage students, assign lessons, and communicate via live chat. Built with React, Node.js, Express, and Firebase.
 
-## Pictures
-
-[Add your deployed application URL here]
-
 ## Screenshots
 
 ### Authentication Flow
 
-![Login Page](screenshots/login-page.png)
-![Verification Page](screenshots/verification-page.png)
-![Student Setup](screenshots/student-setup.png)
+
+
+
+
+
+| Instructor | Student |
+|---------------------|-------------------|
+| <img width="1639" height="973" alt="image" src="https://github.com/user-attachments/assets/7e90b1aa-3612-4e0b-a9dc-f1b067c5d513" /> | <img width="1079" height="1044" alt="image" src="https://github.com/user-attachments/assets/bc051b6d-9001-427b-a8b8-d5b0e494200a" />|
+| <img width="1060" height="982" alt="image" src="https://github.com/user-attachments/assets/99d2b6f5-bdcc-436e-a92f-e77fe744512b" /> | <img width="684" height="551" alt="image" src="https://github.com/user-attachments/assets/8632a02f-2a1b-46e4-9079-d87487b6b2d8" /> |
+| <img width="462" height="800" alt="image" src="https://github.com/user-attachments/assets/7b1855de-0879-4267-a689-c7004bd88444" /> | <img width="1485" height="865" alt="image" src="https://github.com/user-attachments/assets/2ec1f16b-0ea2-4f03-8880-4b6feef858ff" /> |
+| | <img width="1523" height="912" alt="image" src="https://github.com/user-attachments/assets/66348964-7d8e-41b0-b6a9-bda872ed8b66" />|
+| | <img width="930" height="418" alt="image" src="https://github.com/user-attachments/assets/3bebce39-4d17-46a7-93a3-6d4aecdef934" /> |
 
 ### Instructor Dashboard
+<img width="1916" height="994" alt="image" src="https://github.com/user-attachments/assets/f4c34849-0cfd-42a3-bad6-a75b5964413a" />
 
-![Instructor Dashboard](screenshots/instructor-dashboard.png)
-![Student Management](screenshots/student-management.png)
-![Lesson Assignment](screenshots/lesson-assignment.png)
+<img width="1919" height="831" alt="image" src="https://github.com/user-attachments/assets/a19a6b99-9489-47e8-b5ea-334390ab9f92" />
+
+<img width="1914" height="1026" alt="image" src="https://github.com/user-attachments/assets/f48378e2-6469-46a7-8bca-271e0405bc9d" />
+
+<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/991a578a-f39d-4f98-a715-f139d6c0f07e" />
+
+<img width="1919" height="1042" alt="image" src="https://github.com/user-attachments/assets/b284696a-ec97-42cc-a72b-9bf9bab58567" />
+
 
 ### Student Dashboard
+<img width="1914" height="893" alt="image" src="https://github.com/user-attachments/assets/a2d51aac-9eb7-435c-affd-7b1932f9b065" />
 
-![Student Dashboard](screenshots/student-dashboard.png)
-![Student Lessons](screenshots/student-lessons.png)
+<img width="1917" height="572" alt="image" src="https://github.com/user-attachments/assets/965e7164-d070-4914-9074-6899561fa9d5" />
+
+<img width="1912" height="825" alt="image" src="https://github.com/user-attachments/assets/76b025fe-19bc-4879-bd86-5641baeddd27" />
+
+<img width="1917" height="588" alt="image" src="https://github.com/user-attachments/assets/e7d8736a-d4ce-4204-851b-e84c5d9cf725" />
+
+<img width="1919" height="890" alt="image" src="https://github.com/user-attachments/assets/685cae4a-b946-4ef0-a0a3-3fc2f805db5d" />
+
 
 ### Real-time Chat
 
-![Chat Interface](screenshots/chat-interface.png)
 
 ## Project Structure
 
