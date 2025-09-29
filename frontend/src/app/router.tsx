@@ -8,17 +8,19 @@ import { VerificationPage } from '@/features/auth/components/verification-page'
 import { StudentSetupPage } from '@/features/auth/components/student-setup-page'
 import { InstructorDashboard } from '@/features/instructor/components/instructor-dashboard'
 import { StudentManagement } from '@/features/instructor/components/student-management'
-import { StudentProfile } from '@/features/instructor/components/student-profile'
+import { StudentProfile as InstructorStudentProfile } from '@/features/instructor/components/student-profile'
 import { LessonAssignment } from '@/features/instructor/components/lesson-assignment'
 import { ChatListPage } from '@/features/chat/pages/chat-list-page'
 import { ChatConversationPage } from '@/features/chat/pages/chat-conversation-page'
 import { SidebarLayout } from '@/features/chat/components/sidebar-layout'
+import { StudentDashboard } from '@/features/student/components/student-dashboard'
+import { StudentLesson } from '@/features/student/components/student-lesson'
+import { StudentLessonsList } from '@/features/student/components/student-lessons-list'
+import { StudentProfile } from '@/features/student/components/student-profile'
+import { NotFoundPage } from '@/components/not-found-page'
 
 
 const StudentSetupPageComponent = () => <StudentSetupPage />
-const StudentDashboard = () => <div>Student Dashboard</div>
-const StudentLesson = () => <div>Student Lesson</div>
-const NotFoundPage = () => <div>404 Not Found</div>
 
 const router = createBrowserRouter([
   {
@@ -71,7 +73,7 @@ const router = createBrowserRouter([
       },
       {
         path: routes.instructor.studentProfile,
-        element: <StudentProfile />,
+        element: <InstructorStudentProfile />,
       },
       {
         path: routes.instructor.lessons,
@@ -96,6 +98,10 @@ const router = createBrowserRouter([
       {
         path: routes.student.lesson,
         element: <StudentLesson />,
+      },
+      {
+        path: routes.student.lessons,
+        element: <StudentLessonsList />,
       },
       {
         path: routes.student.profile,

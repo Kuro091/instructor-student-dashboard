@@ -15,6 +15,7 @@ export const routes = {
   student: {
     dashboard: '/student',
     lesson: 'lesson/:id',
+    lessons: 'lessons',
     profile: 'profile',
   },
   

@@ -10,7 +10,7 @@ export interface FirestoreTimestamp {
   _nanoseconds: number
 }
 
-export function timestampToDate(timestamp: string | FirestoreTimestamp): Date {
+export function firestoreTimestampToDate(timestamp: string | FirestoreTimestamp): Date {
   if (timestamp && typeof timestamp === 'object' && '_seconds' in timestamp) {
     return new Date(timestamp._seconds * 1000)
   }

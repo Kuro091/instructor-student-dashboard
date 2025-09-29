@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useConversations } from '../hooks/use-chat-queries'
 import { useChat } from '../stores/chat-store'
 import { useAuth } from '@/features/auth/stores/auth-context'
-import { cn, timestampToDate, type FirestoreTimestamp } from '@/lib/utils'
+import { cn, firestoreTimestampToDate, type FirestoreTimestamp } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 export function ChatList() {
@@ -26,7 +26,7 @@ export function ChatList() {
   })
 
   const formatLastMessageTime = (timestamp: string | FirestoreTimestamp) => {
-    const date = timestampToDate(timestamp)
+    const date = firestoreTimestampToDate(timestamp)
     const now = new Date()
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
 

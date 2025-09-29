@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { Check, CheckCheck } from 'lucide-react'
-import { cn, timestampToDate, type FirestoreTimestamp } from '@/lib/utils'
+import { cn, firestoreTimestampToDate, type FirestoreTimestamp } from '@/lib/utils'
 import type { Message } from '../types'
 
 interface MessageBubbleProps {
@@ -21,7 +21,7 @@ export function MessageBubble({
   isLastReadMessage = false
 }: MessageBubbleProps) {
   const formatTime = (timestamp: string | FirestoreTimestamp) => {
-    const date = timestampToDate(timestamp)
+    const date = firestoreTimestampToDate(timestamp)
     const now = new Date()
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
     

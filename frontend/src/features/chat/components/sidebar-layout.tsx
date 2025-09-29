@@ -18,15 +18,15 @@ import {
 
 const instructorNavigation = [
   { name: 'Dashboard', href: routes.instructor.dashboard, icon: LayoutDashboard },
-  { name: 'Students', href: routes.instructor.students, icon: Users },
-  { name: 'Lessons', href: routes.instructor.lessons, icon: BookOpen },
+  { name: 'Students', href: '/instructor/students', icon: Users },
+  { name: 'Lessons', href: '/instructor/lessons', icon: BookOpen },
   { name: 'Messages', href: routes.chat.list, icon: MessageSquare },
 ]
 
 const studentNavigation = [
   { name: 'Dashboard', href: routes.student.dashboard, icon: LayoutDashboard },
-  { name: 'Lessons', href: routes.student.lesson, icon: BookOpen },
-  { name: 'Profile', href: routes.student.profile, icon: Users },
+  { name: 'Lessons', href: '/student/lessons', icon: BookOpen },
+  { name: 'Profile', href: '/student/profile', icon: Users },
   { name: 'Messages', href: routes.chat.list, icon: MessageSquare },
 ]
 

@@ -42,6 +42,9 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case 'CLEAR_ERROR':
       return { ...state, error: null }
     
+    case 'UPDATE_USER':
+      return { ...state, user: action.payload }
+    
     default:
       return state
   }
@@ -93,12 +96,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const updateUser = (user: User) => {
+    dispatch({ type: 'UPDATE_USER', payload: user })
+  }
+
   const value: AuthContextType = {
     ...state,
     login,
     logout,
     clearError,
     setLoading,
+    updateUser,
   }
 
   return (
