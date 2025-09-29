@@ -2,12 +2,9 @@ import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import dotenv from "dotenv";
 
 import authRoutes from "./modules/auth/auth.routes";
 import { errorHandler } from "./shared/middleware/error.middleware";
-
-dotenv.config();
 
 const app: Express = express();
 

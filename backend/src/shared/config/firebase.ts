@@ -21,9 +21,9 @@ if (!admin.apps.length) {
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_PROJECT_ID,
     });
-    console.log("Firebase initialized successfully");
+    console.log("✅ Firebase initialized successfully");
   } else {
-    console.warn("Firebase not configured - using mock mode");
+    console.warn("⚠️ Firebase not configured - using mock mode");
     // Mock Firebase for development
     admin.initializeApp({
       projectId: "mock-project",
