@@ -3,7 +3,8 @@ import type {
   LoginResponse, 
   CreateAccessCodeRequest, 
   StudentSetupRequest, 
-  StudentSetupResponse 
+  StudentSetupResponse,
+  User
 } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -64,7 +65,7 @@ export const authApi = {
   },
 
   validateToken: async (token: string) => {
-    return apiRequest(`/api/student-auth/validate-token/${token}`)
+    return apiRequest<{ success: boolean; data: { isValid: boolean; email: string } }>(`/api/student-auth/validate-token/${token}`)
   },
 
   studentLogin: async (data: { username: string; password: string }): Promise<LoginResponse> => {
@@ -78,5 +79,9 @@ export const authApi = {
     return apiRequest('/api/auth/logout', {
       method: 'POST',
     })
+  },
+
+  validateAuthToken: async () => {
+    return apiRequest<{ success: boolean; data: { user: User } }>('/api/auth/validate-token')
   },
 }

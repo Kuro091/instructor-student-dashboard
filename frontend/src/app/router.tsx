@@ -5,9 +5,10 @@ import { ProtectedRoute } from './protected-route'
 import { HomePage } from './home-page'
 import { LoginPage } from '@/features/auth/components/login-page'
 import { VerificationPage } from '@/features/auth/components/verification-page'
+import { StudentSetupPage } from '@/features/auth/components/student-setup-page'
 
 
-const StudentSetupPage = () => <div>Student Setup Page</div>
+const StudentSetupPageComponent = () => <StudentSetupPage />
 const InstructorDashboard = () => <div>Instructor Dashboard</div>
 const InstructorStudents = () => <div>Instructor Students</div>
 const InstructorStudentProfile = () => <div>Instructor Student Profile</div>
@@ -46,7 +47,7 @@ const router = createBrowserRouter([
     path: routes.studentSetup,
     element: (
       <ProtectedRoute requireAuth={false}>
-        <StudentSetupPage />
+        <StudentSetupPageComponent />
       </ProtectedRoute>
     ),
   },

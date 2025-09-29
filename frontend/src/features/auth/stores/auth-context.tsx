@@ -1,7 +1,8 @@
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react'
+import React, { createContext, useContext, useReducer, type ReactNode } from 'react'
 import type { AuthAction, AuthContextType } from './auth-types'
 import { initialState } from './auth-types'
 import type { AuthState, User } from '../types'
+import { useValidateAuthToken, useLogout } from '../hooks/use-auth-queries'
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
@@ -55,28 +56,18 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  useEffect(() => {
-    const validateToken = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/validate-token`, {
-          credentials: 'include',
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && data.data.user) {
-            dispatch({ type: 'LOGIN_SUCCESS', payload: { user: data.data.user, token: null } })
-          }
-        } else {
-          dispatch({ type: 'LOGOUT' })
-        }
-      } catch {
-        dispatch({ type: 'LOGOUT' })
-      }
-    }
+  const { data: tokenData, isLoading: isValidatingToken } = useValidateAuthToken()
+  const logoutMutation = useLogout()
 
-    validateToken()
-  }, [])
+  React.useEffect(() => {
+    if (isValidatingToken) {
+      dispatch({ type: 'LOGIN_START' })
+    } else if (tokenData?.success && tokenData?.data?.user) {
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: tokenData.data.user, token: null } })
+    } else {
+      dispatch({ type: 'LOGOUT' })
+    }
+  }, [tokenData, isValidatingToken])
 
   const login = (user: User) => {
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: null } })
@@ -84,10 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      })
+      await logoutMutation.mutateAsync()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

@@ -1,24 +1,43 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '../stores/auth-context'
-import { authApi } from '../api'
+import { useValidateAccessCode, useCreateAccessCode, useLoginEmail } from '../hooks/use-auth-queries'
 import { routes } from '@/app/routes'
 
+const verificationSchema = z.object({
+  code: z.string()
+    .length(6, 'Please enter a 6-digit verification code')
+    .regex(/^\d{6}$/, 'Code must contain only numbers')
+})
+
+type VerificationFormData = z.infer<typeof verificationSchema>
+
 export function VerificationPage() {
-  const [code, setCode] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const [resendCooldown, setResendCooldown] = useState(0)
   
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   
+  const validateAccessCodeMutation = useValidateAccessCode()
+  const createAccessCodeMutation = useCreateAccessCode()
+  const loginEmailMutation = useLoginEmail()
+  
   const { method, value } = location.state || { method: 'phone', value: '' }
+
+  const form = useForm<VerificationFormData>({
+    resolver: zodResolver(verificationSchema),
+    defaultValues: {
+      code: ''
+    }
+  })
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -27,51 +46,27 @@ export function VerificationPage() {
     }
   }, [resendCooldown])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (code.length !== 6) {
-      setError('Please enter a 6-digit verification code')
-      return
-    }
-
-    setIsLoading(true)
-    setError('')
-
-    try {
+  const onSubmit = async (data: VerificationFormData) => {
       const loginData = method === 'phone' 
-        ? { phone: value, accessCode: code }
-        : { email: value, accessCode: code }
+        ? { phone: value, accessCode: data.code }
+        : { email: value, accessCode: data.code }
       
-      const response = await authApi.validateAccessCode(loginData)
+      const response = await validateAccessCodeMutation.mutateAsync(loginData)
       login(response.data.user)
       
       const redirectPath = response.data.user.role === 'INSTRUCTOR' 
         ? routes.instructor.dashboard 
         : routes.student.dashboard
       navigate(redirectPath, { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid verification code')
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleResend = async () => {
-    setIsLoading(true)
-    setError('')
-
-    try {
       if (method === 'phone') {
-        await authApi.createAccessCode({ phone: value })
+        await createAccessCodeMutation.mutateAsync({ phone: value })
       } else {
-        await authApi.loginEmail({ email: value })
+        await loginEmailMutation.mutateAsync({ email: value })
       }
       setResendCooldown(60)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend code')
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   return (
@@ -86,46 +81,60 @@ export function VerificationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="code">Verification Code</Label>
               <Input
                 id="code"
                 type="text"
                 placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                {...form.register('code', {
+                  onChange: (e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                    form.setValue('code', value)
+                  }
+                })}
                 maxLength={6}
                 className="text-2xl text-center tracking-widest"
-                required
               />
+              {form.formState.errors.code && (
+                <p className="text-red-500 text-sm">{form.formState.errors.code.message}</p>
+              )}
             </div>
 
-            {error && (
+            {validateAccessCodeMutation.error && (
               <div className="bg-red-50 p-3 rounded-md text-red-600 text-sm">
-                {error}
+                {validateAccessCodeMutation.error.message || 'Invalid verification code'}
               </div>
             )}
 
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || code.length !== 6}
+              disabled={validateAccessCodeMutation.isPending || form.watch('code').length !== 6}
             >
-              {isLoading ? 'Verifying...' : 'Verify Code'}
+              {validateAccessCodeMutation.isPending ? 'Verifying...' : 'Verify Code'}
             </Button>
+
+            {(createAccessCodeMutation.error || loginEmailMutation.error) && (
+              <div className="bg-red-50 p-3 rounded-md text-red-600 text-sm">
+                {createAccessCodeMutation.error?.message || loginEmailMutation.error?.message || 'Failed to resend code'}
+              </div>
+            )}
 
             <div className="text-center">
               <Button
                 type="button"
                 variant="link"
                 onClick={handleResend}
-                disabled={isLoading || resendCooldown > 0}
+                disabled={createAccessCodeMutation.isPending || loginEmailMutation.isPending || resendCooldown > 0}
                 className="text-sm"
               >
                 {resendCooldown > 0 
                   ? `Resend code in ${resendCooldown}s` 
-                  : 'Resend verification code'
+                  : (createAccessCodeMutation.isPending || loginEmailMutation.isPending) 
+                    ? 'Resending...' 
+                    : 'Resend verification code'
                 }
               </Button>
             </div>

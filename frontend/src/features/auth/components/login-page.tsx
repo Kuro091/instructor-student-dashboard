@@ -1,42 +1,50 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PhoneInputComponent } from '@/components/ui/phone-input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { authApi } from '../api'
+import { useCreateAccessCode, useLoginEmail } from '../hooks/use-auth-queries'
 import { routes } from '@/app/routes'
+
+const loginSchema = z.object({
+  phone: z.string().optional(),
+  email: z.email('Please enter a valid email address').optional(),
+}).refine(data => data.phone || data.email, {
+  message: "Either phone or email is required",
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   
   const navigate = useNavigate()
+  const createAccessCodeMutation = useCreateAccessCode()
+  const loginEmailMutation = useLoginEmail()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      phone: '',
+      email: ''
+    }
+  })
 
-    try {
+  const onSubmit = async (data: LoginFormData) => {
       if (loginMethod === 'phone') {
-        await authApi.createAccessCode({ phone })
+        await createAccessCodeMutation.mutateAsync({ phone: data.phone! })
       } else {
-        await authApi.loginEmail({ email })
+        await loginEmailMutation.mutateAsync({ email: data.email! })
       }
       
-      // Navigate to verification page with the input value
-      const value = loginMethod === 'phone' ? phone : email
+      const value = loginMethod === 'phone' ? data.phone! : data.email!
       navigate(routes.verify, { state: { method: loginMethod, value } })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send verification code')
-    } finally {
-      setIsLoading(false)
-    }
+    
   }
 
   return (
@@ -51,13 +59,15 @@ export function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Login Method Toggle */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex space-x-2">
               <Button
                 type="button"
                 variant={loginMethod === 'phone' ? 'default' : 'outline'}
-                onClick={() => setLoginMethod('phone')}
+                onClick={() => {
+                  setLoginMethod('phone')
+                  form.clearErrors()
+                }}
                 className="flex-1"
               >
                 Phone
@@ -65,22 +75,24 @@ export function LoginPage() {
               <Button
                 type="button"
                 variant={loginMethod === 'email' ? 'default' : 'outline'}
-                onClick={() => setLoginMethod('email')}
+                onClick={() => {
+                  setLoginMethod('email')
+                  form.clearErrors()
+                }}
                 className="flex-1"
               >
                 Email
               </Button>
             </div>
 
-            {/* Input Field */}
             <div className="space-y-2">
               <Label htmlFor={loginMethod}>
                 {loginMethod === 'phone' ? 'Phone Number' : 'Email Address'}
               </Label>
               {loginMethod === 'phone' ? (
                 <PhoneInputComponent
-                  value={phone}
-                  onChange={(value) => setPhone(value || '')}
+                  value={form.watch('phone')}
+                  onChange={(value) => form.setValue('phone', value || '')}
                   placeholder="Enter phone number"
                 />
               ) : (
@@ -88,31 +100,32 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="student@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  {...form.register('email')}
                 />
+              )}
+              {form.formState.errors.phone && (
+                <p className="text-red-500 text-sm">{form.formState.errors.phone.message}</p>
+              )}
+              {form.formState.errors.email && (
+                <p className="text-red-500 text-sm">{form.formState.errors.email.message}</p>
               )}
             </div>
 
-            {/* Error Message */}
-            {error && (
+            {(createAccessCodeMutation.error || loginEmailMutation.error) && (
               <div className="bg-red-50 p-3 rounded-md text-red-600 text-sm">
-                {error}
+                {createAccessCodeMutation.error?.message || loginEmailMutation.error?.message || 'Failed to send verification code'}
               </div>
             )}
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending...' : 'Send Verification Code'}
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={createAccessCodeMutation.isPending || loginEmailMutation.isPending}
+                >
+                  {(createAccessCodeMutation.isPending || loginEmailMutation.isPending) ? 'Sending...' : 'Send Verification Code'}
             </Button>
           </form>
 
-          {/* Additional Info */}
           <div className="mt-6 text-gray-600 text-sm text-center">
             <p>
               We'll send a verification code to your {loginMethod === 'phone' ? 'phone' : 'email'}
